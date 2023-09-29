@@ -1,0 +1,51 @@
+Regular meeting: Monday 13:30
+
+Meeting Agenda:
+        Meeting time
+        Data access
+        SoTA paper
+        Report
+
+
+ADNI dataset - Alzheimers disease dataset
+     Write to the authors to get access?
+     Not allowed to share, but free to use
+
+Data: CT and TI MRI 3D scans, along with some other pieces of data
+We have registered pairs of images, can create artificially unaligned data with known registration parameters. Can use SoTA tool and can find error of this. Then train model and validate to find error and compare with SoTA. This is the first step. Registration will be 3D, but can start with 2D
+
+60/20/20 train/val/test
+
+Read Nicole's thesis in the meantime while Mostafa finds data
+Literature search for MR to CT registration
+     Make note of which datasets papers use and whether data is public
+SoTA registration will fall into two categories:
+     Move images around
+     Deep Learning (either parameter estimation or direct registration, sometimes generative)
+
+Report (scientific paper):
+        Intro (1pg)
+        Methods
+           Data
+           Computational methods (often large part)
+           Eval criteria + statistics
+        Results
+           Data
+           Accuracy
+           Eval criteria + statistics
+        Discussion
+        (Limitations)
+        Conclusion
+
+MICCAI 2023 format is a potential style for report
+Write thesis such that it has:
+      Synopsis 4-10pg
+        Background
+        Motivation
+        Research question
+      Scientific paper
+      Supplementary material
+
+Structure is such that the middle can be "cut out" and potentially published
+
+I should set agendas for next meetings
