@@ -1,0 +1,30 @@
+Before:
+Handling padding and edges? Reflect, crop, other method?
+Normalising images between 0 and 1?
+Nice libraries and tools for registration?
+I'll give an update on progress with RIRE dataset
+
+After:
+Resolution: interpolate as few times as possible
+Do interpolation as the very last step
+simpleitk is alright to use
+Registration should work with different resolutions
+Padding is fine, registration should handle the scaling
+Padding should work for everything, except in cases where resolutions are wildly different
+Look at the synthrad dataset maybe
+Mutual Information may not be a good metric?
+
+If normalising and padding, normalise before padding
+
+ct scan intesnsity is physical measure, so measures should be the same across machines, normalising
+next step is deregistration for the artificial dataset
+
+Look at different interpolation methods
+linear or nearest neighbour interpolation might be worth looking at
+linear interpolation may lead to the rotation being directly measurable
+
+Picking a random interpolator during deregistration may be worth it
+Investigate effects of different interpolators
+
+Limit the rotation to <15-20 degrees because it would never be seen irl
+Keep augmentation "realistic"

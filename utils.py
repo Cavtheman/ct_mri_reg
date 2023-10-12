@@ -30,6 +30,13 @@ class IndexTracker:
             f'Use scroll wheel to navigate\nindex {self.index}')
         self.im.axes.figure.canvas.draw()
 
+def parse_transform (path):
+    lines = [ line.split() for line in open (path) ]
+    arr = np.array ([ [ float (x) for x in line[1:] ] for line in lines[15:23] ])
+    origo = arr[:,:arr.shape[1]//2]
+    transform = arr[:,arr.shape[1]//2:]
+    return origo, transform
+
 
 def plot_volume (volume):
     fig, ax = plt.subplots()
@@ -67,6 +74,12 @@ class ScanVolume:
         self.img = resize (self.img, new_size)
         self.pixel_spacing = self.pixel_spacing * scale_factor
 
+    def pad_to_size (self, new_size):
+        x,y,z = self.size()
+        pad_width1 = [(0, new_size[0]-x), (0, new_size[1]-y), (0,0)]
+        pad_width2 = [(0,0), (0,0), (0, new_size[2]-z)]
+        self.img = np.pad (self.img, pad_width=pad_width1, mode="edge")
+        self.img = np.pad (self.img, pad_width=pad_width2, mode="constant")
     #def expand (self, new_size):
     #    assert np.all (np.array (self.size()) < np.array (new_size))
     #    new_img = np.zeros (new_size)
