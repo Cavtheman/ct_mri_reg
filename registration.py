@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from utils import *
-import torchvision.transforms as TF
+#import torchvision.transforms as TF
 #from data_generator import Dataset
 import SimpleITK as sitk
 from downloaddata import fetch_data as fdata
@@ -63,7 +63,6 @@ def get_filenames (path, filetype):
 
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
-    '''
     ct_path = 'data/synthrad/brain/1BA001/ct.nii.gz'
     t1_path = 'data/synthrad/brain/1BA001/mr.nii.gz'
     mask_path = 'data/synthrad/brain/1BA001/mask.nii.gz'
@@ -90,7 +89,6 @@ if __name__ == "__main__":
     plot_volume (mask)
     #plt.plot (t1)
     #plt.show ()
-    '''
     #print (os.listdir ("data/synthrad/brain/"))
     for elem in get_filenames ("data/synthrad/brain/", "ct"):
         print (elem)

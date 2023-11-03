@@ -1,35 +1,33 @@
 from utils import *
+import torch
+from data_generator import Dataset
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-    ct_path = "data/training/dicom_ct/"
-    t1_path = "data/training/dicom_t1/"
-    t1_r_path = "data/training/dicom_t1_rectified/"
-    transform_path = "data/training/transformations/ct_T1.standard"
-    #print (ct_scan[0].ImagerPixelSpacing)
-    origo, transform = parse_transform (transform_path)
-    print (origo)
-    print (origo.shape)
+    np.set_printoptions(suppress=True)
+    ct_path = 'data/synthrad/brain/1BA001/ct.nii.gz'
+    t1_path = 'data/synthrad/brain/1BA001/mr.nii.gz'
+    mask_path = 'data/synthrad/brain/1BA001/mask.nii.gz'
+    rotate = ((np.pi/16,np.pi/16), (np.pi/16,np.pi/16), (np.pi/16,np.pi/16))
+    #rotate = ((0,0), (0,0), (0,0))
+    translate = ((0,0), (0,0), (0,0))
+    shear = ((0,0), (0,0), (0,0))
+    data = Dataset ([t1_path], [ct_path], rotate=rotate, shear=shear, translate=translate)
 
-    print (transform)
-    print (transform.shape)
+    s = 10
+    test = torch.zeros ((s,s,s), dtype=torch.double)
+    test[1:-1,4,1:-1] = 1
+    print (test)
 
-    ct_vol = ScanVolume (ct_path)
-    t1_vol = ScanVolume (t1_path)
+    for fixed, moving, aug_moving, transform in data:
+        #plot_volume (moving)
+        #plot_volume (aug_moving)
+        plot_volume (moving + aug_moving)
 
-    #print (ct_vol.img_data[0].)
-    print (ct_vol.pixel_spacing)
-    print (ct_vol.size ())
-    print (t1_vol.size ())
-
-    #t1_vol.rescale (ct_vol.pixel_spacing)
-    #print (t1_vol.size ())
-    #print (t1_vol.pixel_spacing)
-
-    t1_vol.resize (ct_vol.size ())
-    #print (t1_vol.size ())
-    #print (t1_vol.pixel_spacing)
-
-    #plot_volume (ct_vol.norm_img ())
-    #plot_volume (t1_vol.norm_img ())
-    plot_volume (ct_vol.norm_img () + t1_vol.norm_img ())
-    #plot_volume (pair.img2)
+    #test_aug, transform = data.__augment_image__(test)
+    #fig, ax = plt.subplots (2, s)
+    #for i in range(s):
+    #    ax[0,i].imshow (test[i], vmin=-1, vmax=1)
+    #    im = ax[1,i].imshow (test_aug[i], vmin=-1, vmax=1)
+    #fig.colorbar (im)
+    #fig.savefig ("test.png")

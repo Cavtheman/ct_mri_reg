@@ -1,131 +1,115 @@
-import torch
-import torch.nn.functional as F
 from torch.utils import data
-import torchvision.transforms.functional as TF
-from torchvision.transforms import ToTensor
+
+import torch
 import random
+import numpy as np
+import SimpleITK as sitk
+import torch.nn.functional as F
+import torchvision.transforms.functional as TF
 
 from PIL import Image
+from scipy.ndimage import affine_transform
+from torchvision.transforms import ToTensor
 
 class Dataset(data.Dataset):
     # Characterizes a dataset for PyTorch
     # Takes a bunch of arguments for data augmentation as well
-    def __init__(self, ct_paths, t1_paths, translation=0, rotation=0, shear=0):
-        assert (len (ct_paths) == len (t1_paths))
+    def __init__(self, fixed_paths, moving_paths, rotate=None, shear=None, translate=None):
+        assert (len (moving_paths) == len (fixed_paths))
 
-        self.ct_paths = ct_paths
-        self.ct_paths.sort ()
+        self.moving_paths = moving_paths
+        self.moving_paths.sort ()
 
-        self.t1_paths = t1_paths
-        self.t1_paths.sort ()
+        self.fixed_paths = fixed_paths
+        self.fixed_paths.sort ()
 
-        self.mask_paths = mask_paths
-        self.mask_paths.sort ()
-
-        self.translation = translation
-        self.rotation = rotation
+        self.rotate = rotate
         self.shear = shear
+        self.translate = translate
+        # self.mask_paths = mask_paths
+        # self.mask_paths.sort ()
+
 
     def __len__(self):
-        return len(self.ct_paths)
+        return len(self.moving_paths)
 
     def __getitem__(self, index):
         # Generates one sample of data
-        ct_path = self.ct_paths[index]
-        t1_path = self.t1_paths[index]
+        moving_path = self.moving_paths[index]
+        fixed_path = self.fixed_paths[index]
         #mask_path = self.mask_paths[index]
 
-        sitk_t1 = sitk.ReadImage(t1_path)
-        #t1 = sitk.GetArrayFromImage(sitk_t1)
+        sitk_fixed = sitk.ReadImage(fixed_path)
+        fixed = sitk.GetArrayFromImage(sitk_fixed)
 
-        sitk_ct = sitk.ReadImage(ct_path)
-        #ct = sitk.GetArrayFromImage(sitk_ct)
+        sitk_moving = sitk.ReadImage(moving_path)
+        moving = sitk.GetArrayFromImage(sitk_moving)
+        aug_moving, transform_mat = self.__augment_image__(moving)
 
-        aug_ct = self.__augment_data__ (sitk_ct)
+        return fixed, moving, aug_moving, transform_mat
 
-        return sitk_t1, sitk_ct, aug_ct
-
-    def __augment_data__(self, data):
+    def __augment_image__(self, data):
         # Rotates image randomly
-        match self.rotation:
-            case (lower, upper):
-                rotation = random.randint(lower, upper)
+        np.set_printoptions(suppress=True)
+
+        match self.rotate:
+            case ((lower_x, upper_x), (lower_y, upper_y), (lower_z, upper_z)):
+                rot_x = random.uniform (lower_x, upper_x)
+                rot_y = random.uniform (lower_y, upper_y)
+                #rot_y = np.pi/2
+                rot_z = random.uniform (lower_z, upper_z)
+
+
+                rot_x_mat = torch.tensor ([[ 1,             0,              0,              0],
+                                           [ 0,             np.cos(rot_x),  np.sin(rot_x),  0],
+                                           [ 0,             -np.sin(rot_x), np.cos(rot_x),  0],
+                                           [ 0,             0,              0,              1]],
+                                          dtype=torch.double)
+                rot_y_mat = torch.tensor ([[ np.cos(rot_y), 0,              -np.sin(rot_y), 0],
+                                           [ 0,             1,              0,              0],
+                                           [ np.sin(rot_y), 0,              np.cos(rot_y),  0],
+                                           [ 0,             0,              0,              1]],
+                                          dtype=torch.double)
+                rot_z_mat = torch.tensor ([[ np.cos(rot_z), -np.sin(rot_z), 0,              0],
+                                           [ np.sin(rot_z), np.cos(rot_z),  0,              0],
+                                           [ 0,             0,              1,              0],
+                                           [ 0,             0,              0,              1]],
+                                          dtype=torch.double)
+
+                rot_mat = torch.matmul (rot_x_mat, rot_y_mat)
+                rot_mat = torch.matmul (rot_mat, rot_z_mat)
+            case None:
+                rot_mat = torch.eye (4, dtype=torch.double)
         match self.shear:
-            case (lower, upper):
-                shear = random.uniform(lower, upper)
+            case ((lower_x, upper_x), (lower_y, upper_y), (lower_z, upper_z)):
+                s_x = random.uniform (lower_x, upper_x)
+                s_y = random.uniform (lower_y, upper_y)
+                s_z = random.uniform (lower_z, upper_z)
+                shear_mat = torch.tensor ([[ 1,   s_y, s_z, 0],
+                                           [ s_x, 1,   s_z, 0],
+                                           [ s_x, s_y, 1,   0],
+                                           [ 0,   0,   0,   1]],
+                                          dtype=torch.double)
+            case None:
+                shear_mat = torch.eye (4, dtype=torch.double)
         match self.translate:
-            case ((lower_x, upper_x), (lower_y, upper_y)):
-                translate = (random.uniform (lower_x, upper_x), random.uniform (lower_y, upper_y))
+            case ((lower_x, upper_x), (lower_y, upper_y), (lower_z, upper_z)):
+                transl_mat = torch.tensor ([[1, 0, 0, random.uniform (lower_x, upper_x)],
+                                            [0, 1, 0, random.uniform (lower_y, upper_y)],
+                                            [0, 0, 1, random.uniform (lower_z, upper_z)],
+                                            [0, 0, 0, 1]],
+                                           dtype=torch.double)
+            case None:
+                transl_mat = torch.eye (4, dtype=torch.double)
 
-        data = TF.affine(data, rotation, translate, 1, shear)
-    #def __init__(self, list_IDs, data_path, label_path, hflip=None, vflip=None, angle=0, shear=0, brightness=1, pad=(19,0,0,0), contrast=1, use_channel=None):
-    #    self.list_IDs = list_IDs
-    #    self.data_path = data_path
-    #    self.label_path = label_path
-    #    self.hflip = hflip
-    #    self.vflip = vflip
-    #    self.angle = angle
-    #    self.shear = shear
-    #    self.brightness = brightness
-    #    self.pad = pad
-    #    self.contrast = contrast
-    #    self.use_channel = use_channel
-'''
-    def __augment_data__(self, data, labels, hflip, vflip, angle, shear, brightness, pad, contrast, use_channel):
+        # extra translation to make rotation around center
+        c_in = 0.5*torch.tensor (data.shape,dtype=torch.double)
+        offset = c_in - torch.matmul (c_in, rot_mat[:-1,:-1])
+        transl_mat[:-1,-1] = -offset
 
-        # Flipping the image horizontally
-        if hflip and random.random() > hflip:
-            data = TF.hflip(data)
-            labels = TF.hflip(labels)
+        transform_mat = torch.eye (4, dtype=torch.double)
+        transform_mat = torch.matmul (transform_mat, shear_mat)
+        transform_mat = torch.matmul (transform_mat, rot_mat)
+        transform_mat = torch.matmul (transform_mat, transl_mat)
 
-        # Flipping the image vertically
-        if vflip and random.random() > vflip:
-            data = TF.vflip(data)
-            labels = TF.vflip(labels)
-
-        # Adjusts the brightness randomly
-        if type(brightness) is tuple:
-            brightness = random.uniform(brightness[0], brightness[1])
-
-        # Rotates image randomly
-        if type(angle) is tuple:
-            angle = random.randint(angle[0], angle[1])
-
-        # Shears image randomly
-        if type(shear) is tuple:
-            shear = random.uniform(shear[0], shear[1])
-
-        if type(contrast) is tuple:
-            contrast = random.uniform(contrast[0], contrast[1])
-
-        data = TF.adjust_contrast(data, contrast)
-        data = TF.adjust_brightness(data, brightness)
-
-        data = TF.affine(data, angle, (0,0), 1, shear)
-        labels = TF.affine(labels, angle, (0,0), 1, shear)
-
-        data = F.pad(ToTensor()(data), pad)
-        labels = F.pad(ToTensor()(labels), pad)
-
-        if use_channel:
-            data = torch.narrow(data, 0, use_channel, 1)
-
-        return data, labels
-
-
-    def __len__(self):
-        return len(self.list_IDs)
-
-    def __getitem__(self, index):
-        # Generates one sample of data
-        ID = self.list_IDs[index]
-
-        # Load data and get label
-        data = Image.open(self.data_path.format(ID))
-        labels = Image.open(self.label_path.format(ID))
-
-        # Augment the data and labels randomly using given arguments
-        data, labels = self.__augment_data__(data, labels, self.hflip, self.vflip, self.angle, self.shear, self.brightness, self.pad, self.contrast, self.use_channel)
-
-        return data, labels
-'''
+        return affine_transform (data, transform_mat, mode="nearest"), transform_mat
