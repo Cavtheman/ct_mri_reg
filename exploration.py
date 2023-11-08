@@ -8,7 +8,7 @@ if __name__ == "__main__":
     ct_path = 'data/synthrad/brain/1BA001/ct.nii.gz'
     t1_path = 'data/synthrad/brain/1BA001/mr.nii.gz'
     mask_path = 'data/synthrad/brain/1BA001/mask.nii.gz'
-    rotate = ((np.pi/16,np.pi/16), (np.pi/16,np.pi/16), (np.pi/16,np.pi/16))
+    rotate = ((-np.pi/16,np.pi/16), (-np.pi/16,np.pi/16), (-np.pi/16,np.pi/16))
     #rotate = ((0,0), (0,0), (0,0))
     translate = ((0,0), (0,0), (0,0))
     shear = ((0,0), (0,0), (0,0))
@@ -17,11 +17,12 @@ if __name__ == "__main__":
     s = 10
     test = torch.zeros ((s,s,s), dtype=torch.double)
     test[1:-1,4,1:-1] = 1
-    print (test)
+    #print (test)
 
     for fixed, moving, aug_moving, transform in data:
         #plot_volume (moving)
         #plot_volume (aug_moving)
+        print (transform)
         plot_volume (moving + aug_moving)
 
     #test_aug, transform = data.__augment_image__(test)

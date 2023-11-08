@@ -1,0 +1,3 @@
+[submodule "Networks_for_Affine_Medical_Image_Registration"]
+	path = Networks_for_Affine_Medical_Image_Registration
+	url = git@github.com:Computer-Assisted-Clinical-Medicine/Networks_for_Affine_Medical_Image_Registration.git

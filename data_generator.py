@@ -14,7 +14,7 @@ from torchvision.transforms import ToTensor
 class Dataset(data.Dataset):
     # Characterizes a dataset for PyTorch
     # Takes a bunch of arguments for data augmentation as well
-    def __init__(self, fixed_paths, moving_paths, rotate=None, shear=None, translate=None):
+    def __init__(self, fixed_paths, moving_paths, normalise=False, rotate=None, shear=None, translate=None):
         assert (len (moving_paths) == len (fixed_paths))
 
         self.moving_paths = moving_paths
@@ -111,5 +111,5 @@ class Dataset(data.Dataset):
         transform_mat = torch.matmul (transform_mat, shear_mat)
         transform_mat = torch.matmul (transform_mat, rot_mat)
         transform_mat = torch.matmul (transform_mat, transl_mat)
-
-        return affine_transform (data, transform_mat, mode="nearest"), transform_mat
+        ret_val = affine_transform (data, transform_mat, mode="nearest")
+        return torch.tensor (ret_val), transform_mat
