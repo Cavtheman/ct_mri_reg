@@ -1,7 +1,6 @@
 meeting_notes/
 aug_data/
 *.nii.gz
-*.h5
 *.sh
 ## Core latex/pdflatex auxiliary files:
 */__pycache__/
