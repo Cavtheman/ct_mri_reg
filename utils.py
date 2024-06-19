@@ -1,33 +1,53 @@
 import os
 import numpy as np
 import einops as ein
-from pydicom import dcmread
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+
+from pydicom import dcmread
 from skimage.transform import resize, rescale
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 class IndexTracker:
-    def __init__(self, ax, X, side_view=False):
-        aspect = "auto" if side_view else None
+    def __init__(self, ax, X, side_view=False, rgb=False, labels=None):
+        if side_view:
+            X = np.flip (np.transpose(X, [2,1,0,3]), axis=0)
+
         vmin, vmax = np.min (X), np.max (X)
 
-        self.side_view = side_view
         self.index = 0
         self.X = X
         self.ax = ax
-        self.im = ax.imshow(self.X[:, :, self.index], cmap="gray", aspect=aspect, vmin=vmin, vmax=vmax)
+        self.rgb = rgb
+        self.labels = labels
+        self.im = ax.imshow(self.X[:, :, self.index], cmap="gray", vmin=vmin, vmax=vmax)
+
+
+        # Create a divider for the existing axes instance
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        self.colorbar = plt.colorbar(self.im, cax=cax)
+        if labels is not None:
+            colors = ["red", "green", "blue"]
+            handles = [ mpatches.Patch (color=color, label=label) for color,label in zip(colors,labels) ]
+            plt.legend(handles=handles, loc="center left")
+        plt.tight_layout()
         self.update()
 
     def on_scroll(self, event):
         #print(event.button, event.step)
         increment = 1 if event.button == 'up' else -1
-        max_index = self.X.shape[-1] - 1
+        if self.rgb:
+            max_index = self.X.shape[-2] - 1
+        else:
+            max_index = self.X.shape[-1] - 1
+
         self.index = np.clip(self.index + increment, 0, max_index)
         self.update()
 
     def update(self):
         self.im.set_data(self.X[:, :, self.index])
-        self.ax.set_title(
-            f'Use scroll wheel to navigate\nindex {self.index}')
+        self.ax.set_title(f'Use scroll wheel to navigate\nindex {self.index}')
         self.im.axes.figure.canvas.draw()
 
 def parse_transform (path):
@@ -37,13 +57,18 @@ def parse_transform (path):
     transform = arr[:,arr.shape[1]//2:]
     return origo, transform
 
-
-def plot_volume (volume):
-    fig, ax = plt.subplots()
-    tracker = IndexTracker(ax, volume)
+# Interactive plot showing slices of 3D volume
+def plot_volume (volume, side_view=False, rgb=False, labels=None):
+    fig, ax = plt.subplots(figsize=(8,8))
+    tracker = IndexTracker(ax, volume, side_view=side_view, rgb=rgb, labels=labels)
     fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
     plt.show()
 
+# Normalisation between 0 and 1
+def normalise_array (arr):
+    min_val = np.min (arr)
+    max_val = np.max (arr)
+    return (arr-min_val) / (max_val-min_val)
 
 class ScanVolume:
     def __load_image__ (self, img_path):
