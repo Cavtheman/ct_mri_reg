@@ -5,6 +5,7 @@ import nibabel as nib
 #import tensorflow as tf
 from torch.utils import data
 from data_generator import AugmentData
+import voxelmorph as vxm
 
 print ([torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])
 
@@ -20,7 +21,15 @@ def generate_images(n, rotate=None, translate=None, shear=None, normalise=False)
     folder = f"rot{rotate}_trans{translate}_shear{shear}/"
     if normalise: folder = "norm_" + folder
 
-    if not os.path.exists(aug_path + folder): os.makedirs(aug_path + folder)
+    if not os.path.exists(aug_path + folder + "fixed/ct/"): os.makedirs(aug_path + folder + "fixed/ct/")
+    if not os.path.exists(aug_path + folder + "fixed/mr/"): os.makedirs(aug_path + folder + "fixed/mr/")
+    if not os.path.exists(aug_path + folder + "fixed/mask/"): os.makedirs(aug_path + folder + "fixed/mask/")
+
+    if not os.path.exists(aug_path + folder + "moving/ct/"): os.makedirs(aug_path + folder + "moving/ct/")
+    if not os.path.exists(aug_path + folder + "moving/mr/"): os.makedirs(aug_path + folder + "moving/mr/")
+    if not os.path.exists(aug_path + folder + "moving/mask/"): os.makedirs(aug_path + folder + "moving/mask/")
+
+    if not os.path.exists(aug_path + folder + "transforms/"): os.makedirs(aug_path + folder + "transforms/")
 
     i = 0
     # No image is larger than (280, 284, 262)
@@ -39,29 +48,33 @@ def generate_images(n, rotate=None, translate=None, shear=None, normalise=False)
 
 
     while True:
-        for fixed, fixed_mask, moving, aug_moving, aug_mask, transform, inv_transform in dataloader:
+        for ct_fixed, mr_fixed, mask_fixed, ct_moving, mr_moving, mask_moving, transform, inv_transform in dataloader:
             if i%50 == 0:
                 print (i, flush=True)
             # Saving like this won't work with batches larger than 1
             # Note that this has thrown away the original world coordinates
-            nib.save (nib.Nifti1Image (fixed.squeeze().numpy(), np.eye(4)),
-                      aug_path + folder + f"{i}_fixed_ct.nii.gz")
+            nib.save (nib.Nifti1Image (ct_fixed.squeeze().numpy(), np.eye(4)),
+                      aug_path + folder + "fixed/ct/" + f"{i}.nii.gz")
 
-            nib.save (nib.Nifti1Image (fixed_mask.squeeze().numpy(), np.eye(4)),
-                      aug_path + folder + f"{i}_fixed_mask.nii.gz")
+            nib.save (nib.Nifti1Image (mr_fixed.squeeze().numpy(), np.eye(4)),
+                      aug_path + folder + "fixed/mr/" + f"{i}.nii.gz")
 
-            nib.save (nib.Nifti1Image (moving.squeeze().numpy(), np.eye(4)),
-                      aug_path + folder + f"{i}_orig_mr.nii.gz")
+            nib.save (nib.Nifti1Image (mask_fixed.squeeze().numpy(), np.eye(4)),
+                      aug_path + folder + "fixed/mask/" + f"{i}.nii.gz")
+
 
             # Note that the augmented image has the affine transform to get it back to the original saved in .affine
-            nib.save (nib.Nifti1Image (aug_moving.squeeze().numpy(), inv_transform.squeeze()),
-                      aug_path + folder + f"{i}_aug_mr.nii.gz")
+            nib.save (nib.Nifti1Image (ct_moving.squeeze().numpy(), inv_transform.squeeze()),
+                      aug_path + folder + "moving/ct/" + f"{i}.nii.gz")
 
-            nib.save (nib.Nifti1Image (aug_mask.squeeze().numpy(), inv_transform.squeeze()),
-                      aug_path + folder + f"{i}_aug_mask.nii.gz")
+            nib.save (nib.Nifti1Image (mr_moving.squeeze().numpy(), inv_transform.squeeze()),
+                      aug_path + folder + "moving/mr/" + f"{i}.nii.gz")
+
+            nib.save (nib.Nifti1Image (mask_moving.squeeze().numpy(), inv_transform.squeeze()),
+                      aug_path + folder + "moving/mask/" + f"{i}.nii.gz")
 
             # Affine transform
-            torch.save (transform.squeeze(), aug_path + folder + f"{i}_transform.pt")
+            torch.save (transform.squeeze(), aug_path + folder + "transforms/" + f"{i}.pt")
 
             i += 1
             if i >= n: break
@@ -77,5 +90,9 @@ if __name__ == "__main__":
     translate = 20
     shear = None
     normalise = True
-    #generate_images (n=n, rotate=rotate, translate=translate, normalise=normalise)
-    generate_images (n=n, rotate=rotate, translate=translate, shear=shear, normalise=normalise)
+    #generate_images (n=n, rotate=rotate, translate=translate, shear=shear, normalise=normalise)
+
+    generate_images (n=n, rotate=rotate, translate=translate, shear=0.1, normalise=True)
+    generate_images (n=n, rotate=rotate, translate=translate, shear=None, normalise=True)
+    generate_images (n=n, rotate=rotate, translate=translate, shear=0.1, normalise=False)
+    generate_images (n=n, rotate=rotate, translate=translate, shear=None, normalise=False)

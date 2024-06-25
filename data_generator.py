@@ -24,64 +24,64 @@ def nifti_affine (image, transform, mode="nearest"):
     return nib.Nifti1Image (data, nifti_affine)
 
 class SynthradData (data.Dataset):
-    def __find_files__ (self, path, ident):
-        ret_val = [ path + img for img in os.listdir (path) if ident in img ]
+    def __find_files__ (self, path):
+        ret_val = [ path + img for img in os.listdir (path) ]
         ret_val.sort()
         return ret_val
 
     # Characterizes a dataset for PyTorch
-    def __init__(self, img_folder, include_original=False, include_mask=True):
-        self.fixed_ct = self.__find_files__ (img_folder, "_ct.nii.gz")
-        self.fixed_masks = self.__find_files__ (img_folder, "_fixed_mask.nii.gz")
-        self.aug_mr = self.__find_files__ (img_folder, "_aug_mr.nii.gz")
-        self.aug_masks = self.__find_files__ (img_folder, "_aug_mask.nii.gz")
-        self.orig_mr = self.__find_files__ (img_folder, "_orig_mr.nii.gz")
-        self.transforms = self.__find_files__ (img_folder, ".pt")
+    def __init__(self, img_folder, include_mask=True):
+        self.fixed_cts = self.__find_files__(img_folder + "fixed/ct/")
+        self.fixed_mrs = self.__find_files__(img_folder + "fixed/mr/")
+        self.fixed_masks = self.__find_files__(img_folder + "fixed/mask/")
 
-        self.include_original = include_original
+        self.moving_cts = self.__find_files__(img_folder + "moving/ct/")
+        self.moving_mrs = self.__find_files__(img_folder + "moving/mr/")
+        self.moving_masks = self.__find_files__(img_folder + "moving/mask/")
+
+        self.transforms = self.__find_files__(img_folder + "transforms/")
+
         self.include_mask = include_mask
 
     def __len__(self):
-        return len(self.fixed_ct)
+        return len(self.fixed_cts)
 
     # Generates one sample of data
     def __getitem__(self, index):
         # Removing the .affine to world coordinates for use with pytorch dataloader.
         # Probably not super good, but augmentation works properly with it
-        fixed = np.expand_dims (nib.load (self.fixed_ct[index]).get_fdata(), axis=-1)
+        ct_fixed = np.expand_dims (nib.load (self.fixed_cts[index]).get_fdata(), axis=-1)
+        mr_fixed = np.expand_dims (nib.load (self.fixed_mrs[index]).get_fdata(), axis=-1)
 
-        moving = nib.load (self.aug_mr[index])
-        inv_transform = moving.affine
-        moving = np.expand_dims (moving.get_fdata(), axis=-1)
+        ct_moving = nib.load (self.moving_cts[index])
+        mr_moving = nib.load (self.moving_mrs[index])
+
+        inv_transform = ct_moving.affine # Doesn't matter which moving image it's from
+
+        ct_moving = np.expand_dims (ct_moving.get_fdata(), axis=-1)
+        mr_moving = np.expand_dims (mr_moving.get_fdata(), axis=-1)
+
         transform = torch.load (self.transforms[index])
 
         if self.include_mask:
-            fixed_mask = np.expand_dims (nib.load (self.fixed_masks[index]).get_fdata(), axis=-1)
+            mask_fixed = np.expand_dims (nib.load (self.fixed_masks[index]).get_fdata(), axis=-1)
             moving_mask = np.expand_dims (nib.load (self.aug_masks[index]).get_fdata(), axis=-1)
 
-            if self.include_original:
-                orig_moving = np.expand_dims (nib.load (self.orig_mr[index]).get_fdata(), axis=-1)
-                return fixed, fixed_mask, moving, moving_mask, orig_moving, transform, inv_transform
-            else:
-                return fixed, fixed_mask, moving, moving_mask, transform, inv_transform
+            return ct_fixed, mr_fixed, mask_fixed, ct_moving, mr_moving, mask_moving, transform, inv_transform
         else:
-            if self.include_original:
-                orig_moving = np.expand_dims (nib.load (self.orig_mr[index]).get_fdata(), axis=-1)
-                return fixed, moving, orig_moving, transform, inv_transform
-            else:
-                return fixed, moving, transform, inv_transform
+            return ct_fixed, mr_fixed, ct_moving, mr_moving, transform, inv_transform
 
 class AugmentData (data.Dataset):
     # Characterizes a dataset for PyTorch
     # Takes a bunch of arguments for data augmentation as well
-    def __init__(self, fixed_paths, moving_paths, mask_paths, rotate=None, shear=None, translate=None, pad_to=None, normalise=False):
-        assert (len (moving_paths) == len (fixed_paths))
+    def __init__(self, ct_paths, mr_paths, mask_paths, rotate=None, shear=None, translate=None, pad_to=None, normalise=False):
+        assert (len (mr_paths) == len (ct_paths))
 
-        self.fixed_paths = fixed_paths
-        self.fixed_paths.sort ()
+        self.ct_paths = ct_paths
+        self.ct_paths.sort ()
 
-        self.moving_paths = moving_paths
-        self.moving_paths.sort ()
+        self.mr_paths = mr_paths
+        self.mr_paths.sort ()
 
         self.mask_paths = mask_paths
         self.mask_paths.sort ()
@@ -94,13 +94,13 @@ class AugmentData (data.Dataset):
 
     def __max_size__(self):
         size = [0,0,0]
-        for img in self.fixed_paths:
+        for img in self.ct_paths:
             img_size = nib.load(img).get_fdata().shape
             size = [ max (a,b) for a, b in zip (size, img_size) ]
         return size
 
     def __len__(self):
-        return len(self.moving_paths)
+        return len(self.mr_paths)
 
     def __pad_center__(self, image, pad_size):
         pads = [ a-b for a,b in zip (pad_size, image.shape) ]
@@ -111,31 +111,32 @@ class AugmentData (data.Dataset):
                        mode="constant",
                        constant_values=0)
 
+    # Generates one sample of data
     def __getitem__(self, index):
-        # Generates one sample of data
-        fixed_path = self.fixed_paths[index]
-        moving_path = self.moving_paths[index]
+        ct_path = self.ct_paths[index]
+        mr_path = self.mr_paths[index]
         mask_path = self.mask_paths[index]
 
         # Removing the .affine to world coordinates for use with pytorch dataloader.
         # Probably not super good, but augmentation works properly with it
-        fixed = nib.load (fixed_path).get_fdata()
-        moving = nib.load (moving_path).get_fdata()
+        ct_fixed = nib.load (ct_path).get_fdata()
+        mr_fixed = nib.load (mr_path).get_fdata()
         mask = nib.load (mask_path).get_fdata()
 
         if self.normalise:
-            fixed = normalise_array (fixed)
-            moving = normalise_array (moving)
+            ct_fixed = normalise_array (ct_fixed)
+            mr_fixed = normalise_array (mr_fixed)
 
         if self.pad_to is not None:
-            fixed = self.__pad_center__(fixed, self.pad_to)
-            moving = self.__pad_center__(moving, self.pad_to)
+            ct_fixed = self.__pad_center__(ct_fixed, self.pad_to)
+            mr_fixed = self.__pad_center__(mr_fixed, self.pad_to)
             mask = self.__pad_center__(mask, self.pad_to)
 
-        aug_moving, transform_mat, inv_transform = self.__augment_image__(moving)
+        mr_moving, transform_mat, inv_transform = self.__augment_image__(mr_fixed)
+        ct_moving = affine_transform (ct_fixed, transform_mat)
         aug_mask = affine_transform (mask, transform_mat)
 
-        return fixed, mask, moving, aug_moving, aug_mask, transform_mat, inv_transform
+        return ct_fixed, mr_fixed, mask, ct_moving, mr_moving, aug_mask, transform_mat, inv_transform
 
     def __augment_image__(self, data):
         # Rotates nifti image randomly
