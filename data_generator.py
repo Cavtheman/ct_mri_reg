@@ -19,7 +19,7 @@ def normalise_array (arr):
     return (arr-min_val) / (max_val-min_val)
 
 def nifti_affine (image, transform, mode="nearest"):
-    data = affine_transform (image.dataobj, transform, mode=mode)
+    data = affine_transform (image.dataobj, transform, mode=mode, order=0)
     nifti_affine = np.matmul (image.affine, transform)
     return nib.Nifti1Image (data, nifti_affine)
 
@@ -30,14 +30,28 @@ class SynthradData (data.Dataset):
         return ret_val
 
     # Characterizes a dataset for PyTorch
-    def __init__(self, img_folder, include_mask=True):
-        self.fixed_cts = self.__find_files__(img_folder + "fixed/ct/")
-        self.fixed_mrs = self.__find_files__(img_folder + "fixed/mr/")
-        self.fixed_masks = self.__find_files__(img_folder + "fixed/mask/")
+    def __init__(self, img_folder, fixed_cts=None, fixed_mrs=None, moving_cts=None, moving_mrs=None, include_mask=True):
+        if fixed_cts is None:
+            self.fixed_cts = self.__find_files__(img_folder + "fixed/ct/")
+        else:
+            self.fixed_cts = self.__find_files__(fixed_cts)
+        if fixed_mrs is None:
+            self.fixed_mrs = self.__find_files__(img_folder + "fixed/mr/")
+        else:
+            self.fixed_mrs = self.__find_files__(fixed_mrs)
 
-        self.moving_cts = self.__find_files__(img_folder + "moving/ct/")
-        self.moving_mrs = self.__find_files__(img_folder + "moving/mr/")
-        self.moving_masks = self.__find_files__(img_folder + "moving/mask/")
+        if moving_cts is None:
+            self.moving_cts = self.__find_files__(img_folder + "moving/ct/")
+        else:
+            self.moving_cts = self.__find_files__(moving_cts)
+        if moving_mrs is None:
+            self.moving_mrs = self.__find_files__(img_folder + "moving/mr/")
+        else:
+            self.moving_mrs = self.__find_files__(moving_mrs)
+
+        if include_mask:
+            self.fixed_masks = self.__find_files__(img_folder + "fixed/mask/")
+            self.moving_masks = self.__find_files__(img_folder + "moving/mask/")
 
         self.transforms = self.__find_files__(img_folder + "transforms/")
 
@@ -65,7 +79,7 @@ class SynthradData (data.Dataset):
 
         if self.include_mask:
             mask_fixed = np.expand_dims (nib.load (self.fixed_masks[index]).get_fdata(), axis=-1)
-            moving_mask = np.expand_dims (nib.load (self.aug_masks[index]).get_fdata(), axis=-1)
+            mask_moving = np.expand_dims (nib.load (self.moving_masks[index]).get_fdata(), axis=-1)
 
             return ct_fixed, mr_fixed, mask_fixed, ct_moving, mr_moving, mask_moving, transform, inv_transform
         else:
@@ -74,7 +88,7 @@ class SynthradData (data.Dataset):
 class AugmentData (data.Dataset):
     # Characterizes a dataset for PyTorch
     # Takes a bunch of arguments for data augmentation as well
-    def __init__(self, ct_paths, mr_paths, mask_paths, rotate=None, shear=None, translate=None, pad_to=None, normalise=False):
+    def __init__(self, ct_paths, mr_paths, mask_paths, rotate=None, shear=None, translate=None, pad_to=None, normalise=False, side_view=False):
         assert (len (mr_paths) == len (ct_paths))
 
         self.ct_paths = ct_paths
@@ -91,6 +105,7 @@ class AugmentData (data.Dataset):
         self.translate = translate
         self.pad_to = pad_to
         self.normalise = normalise
+        self.side_view = side_view
 
     def __max_size__(self):
         size = [0,0,0]
@@ -127,14 +142,18 @@ class AugmentData (data.Dataset):
             ct_fixed = normalise_array (ct_fixed)
             mr_fixed = normalise_array (mr_fixed)
 
+        if self.side_view:
+            ct_fixed = np.flip (np.transpose(ct_fixed, [2,1,0]), axis=0)
+            mr_fixed = np.flip (np.transpose(mr_fixed, [2,1,0]), axis=0)
+
         if self.pad_to is not None:
             ct_fixed = self.__pad_center__(ct_fixed, self.pad_to)
             mr_fixed = self.__pad_center__(mr_fixed, self.pad_to)
             mask = self.__pad_center__(mask, self.pad_to)
 
         mr_moving, transform_mat, inv_transform = self.__augment_image__(mr_fixed)
-        ct_moving = affine_transform (ct_fixed, transform_mat)
-        aug_mask = affine_transform (mask, transform_mat)
+        ct_moving = affine_transform (ct_fixed, transform_mat, order=0)
+        aug_mask = affine_transform (mask, transform_mat, order=0)
 
         return ct_fixed, mr_fixed, mask, ct_moving, mr_moving, aug_mask, transform_mat, inv_transform
 
@@ -233,5 +252,5 @@ class AugmentData (data.Dataset):
         inv_transform_mat[:-1,-1] = torch.matmul (torch.transpose (transform_mat[:3,:3], 0, 1), -transform_mat[:-1,-1])
 
         #ret_val = nifti_affine (image, transform_mat)
-        ret_val = affine_transform (data, transform_mat)
+        ret_val = affine_transform (data, transform_mat, order=0)
         return ret_val, transform_mat, inv_transform_mat

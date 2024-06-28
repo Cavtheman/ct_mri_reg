@@ -1,0 +1,18 @@
+Because good medical imaging data can be difficult to come by, augmenting existing data to effectively multiply the amount of data you have by a significant margin becomes crucial. Medical imaging datasets are often limited due to the high cost and complexity of acquiring such data, coupled with ethical and privacy concerns that restrict their availability. Data augmentation techniques such as rotation, scaling, translation, and noise injection can generate numerous variations of the original images, thereby expanding the dataset without needing additional real images. This process not only increases the quantity of data but also enhances the diversity of the dataset, making machine learning models more robust and generalizable. By creating a richer and more varied training set, data augmentation helps in overcoming the limitations posed by small datasets, ultimately leading to more accurate and reliable model performance in clinical applications. In this project, I will be using some of these techniques to effectively generate an entirely new dataset of unregistered images.
+
+There are a few caveats and potential problems that generating unregistered images through random affine transformations may cause, however. First, applying affine transformations to images can sometimes lead to unrealistic variations that do not accurately reflect the natural variations found in real medical images. For instance, excessive shearing or scaling can distort anatomical structures in a way that does not occur in actual imaging scenarios, which may confuse the model and lead to poor generalization to real-world data.
+
+Furthermore, these transformations might inadvertently introduce artifacts or noise that were not present in the original images, potentially skewing the model’s learning process. This may come in the form of accidentally randomly cutting off relevant pieces of the image during the affine transformations. This can degrade the quality of the images and affect the model's ability to learn meaningful features.
+
+Another potential challenge to is ensuring that the transformations maintain the clinical relevance of the images. For example, medical images often need to retain specific orientations and scales for accurate diagnosis and analysis. Randomly altering these properties without consideration of clinical context could render the images less useful or even misleading for model training purposes. I will therefore be using a few metrics, described in section \ref{method:criteria}, to validate that the clinical relevance has not been lost.
+
+Below, I will outline the key components and methods used in this data generation process. To help figure out which methods and augmentation parameters give better results, I generate several different versions of the dataset, clearly labelled and separated. To help ensure that
+
+\begin{align*}
+  \begin{pmatrix}
+    a_{11} & a_{12} & a_{13} & t_x \\
+    a_{21} & a_{22} & a_{23} & t_y \\
+    a_{31} & a_{32} & a_{33} & t_z \\
+    0 & 0 & 0 & 1
+  \end{pmatrix}
+\end{align*}

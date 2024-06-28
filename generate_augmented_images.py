@@ -1,4 +1,5 @@
 import os
+import sys
 import torch
 import numpy as np
 import nibabel as nib
@@ -7,9 +8,7 @@ from torch.utils import data
 from data_generator import AugmentData
 import voxelmorph as vxm
 
-print ([torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])
-
-def generate_images(n, rotate=None, translate=None, shear=None, normalise=False):
+def generate_images(n, rotate=None, translate=None, shear=None, normalise=False, side_view=False):
     path = "./data/synthrad/brain/"
     aug_path = "./aug_data/"
     all_image_folders = [ path + img + '/' for img in os.listdir (path)]
@@ -20,6 +19,7 @@ def generate_images(n, rotate=None, translate=None, shear=None, normalise=False)
 
     folder = f"rot{rotate}_trans{translate}_shear{shear}/"
     if normalise: folder = "norm_" + folder
+    if side_view: folder = "side_" + folder
 
     if not os.path.exists(aug_path + folder + "fixed/ct/"): os.makedirs(aug_path + folder + "fixed/ct/")
     if not os.path.exists(aug_path + folder + "fixed/mr/"): os.makedirs(aug_path + folder + "fixed/mr/")
@@ -40,7 +40,8 @@ def generate_images(n, rotate=None, translate=None, shear=None, normalise=False)
                            translate=translate,
                            shear=shear,
                            pad_to=pad_val,
-                           normalise=normalise)
+                           normalise=normalise,
+                           side_view=side_view)
     dataloader = data.DataLoader(dataset,
                                  batch_size=1,
                                  shuffle=True,
@@ -85,14 +86,26 @@ if __name__ == "__main__":
     num_workers = 0
     pad_val = (280, 284, 262)
 
-    n = 1
-    rotate = 0.2
-    translate = 20
-    shear = None
-    normalise = True
-    #generate_images (n=n, rotate=rotate, translate=translate, shear=shear, normalise=normalise)
 
-    generate_images (n=n, rotate=rotate, translate=translate, shear=0.1, normalise=True)
-    generate_images (n=n, rotate=rotate, translate=translate, shear=None, normalise=True)
-    generate_images (n=n, rotate=rotate, translate=translate, shear=0.1, normalise=False)
-    generate_images (n=n, rotate=rotate, translate=translate, shear=None, normalise=False)
+    n = 180
+    side_view = False
+
+    # Arguments varied at runtime
+    rotate = None if sys.argv[1] == "0" else float(sys.argv[1])
+    translate = None if sys.argv[2] == "0" else int(sys.argv[2])
+    shear = None if sys.argv[3] == "0" else float(sys.argv[3])
+    normalise = sys.argv[4].lower() in ('true', '1', 'yes')
+
+    if side_view:
+        pad_val = np.transpose(pad_val, [2,1,0])
+    generate_images (n=n,
+                     rotate=rotate,
+                     translate=translate,
+                     shear=shear,
+                     normalise=normalise,
+                     side_view=side_view)
+
+    #generate_images (n=n, rotate=rotate, translate=translate, shear=0.1, normalise=True)
+    #generate_images (n=n, rotate=rotate, translate=translate, shear=None, normalise=True)
+    #generate_images (n=n, rotate=rotate, translate=translate, shear=0.1, normalise=False)
+    #generate_images (n=n, rotate=rotate, translate=translate, shear=None, normalise=False)
