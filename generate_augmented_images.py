@@ -55,24 +55,24 @@ def generate_images(n, rotate=None, translate=None, shear=None, normalise=False,
             # Saving like this won't work with batches larger than 1
             # Note that this has thrown away the original world coordinates
             nib.save (nib.Nifti1Image (ct_fixed.squeeze().numpy(), np.eye(4)),
-                      aug_path + folder + "fixed/ct/" + f"{i}.nii.gz")
+                      aug_path + folder + f"fixed/ct/{i}.nii.gz")
 
             nib.save (nib.Nifti1Image (mr_fixed.squeeze().numpy(), np.eye(4)),
-                      aug_path + folder + "fixed/mr/" + f"{i}.nii.gz")
+                      aug_path + folder + f"fixed/mr/{i}.nii.gz")
 
             nib.save (nib.Nifti1Image (mask_fixed.squeeze().numpy(), np.eye(4)),
-                      aug_path + folder + "fixed/mask/" + f"{i}.nii.gz")
+                      aug_path + folder + f"fixed/mask/{i}.nii.gz")
 
 
             # Note that the augmented image has the affine transform to get it back to the original saved in .affine
             nib.save (nib.Nifti1Image (ct_moving.squeeze().numpy(), inv_transform.squeeze()),
-                      aug_path + folder + "moving/ct/" + f"{i}.nii.gz")
+                      aug_path + folder + f"moving/ct/{i}.nii.gz")
 
             nib.save (nib.Nifti1Image (mr_moving.squeeze().numpy(), inv_transform.squeeze()),
-                      aug_path + folder + "moving/mr/" + f"{i}.nii.gz")
+                      aug_path + folder + f"moving/mr/{i}.nii.gz")
 
             nib.save (nib.Nifti1Image (mask_moving.squeeze().numpy(), inv_transform.squeeze()),
-                      aug_path + folder + "moving/mask/" + f"{i}.nii.gz")
+                      aug_path + folder + f"moving/mask/{i}.nii.gz")
 
             # Affine transform
             torch.save (transform.squeeze(), aug_path + folder + "transforms/" + f"{i}.pt")

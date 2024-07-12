@@ -16,15 +16,15 @@ if __name__ == "__main__":
     test_bad_moving = nib.load (test_path + "moving/6.nii.gz").get_fdata().squeeze()
     #test_bad_moved = nib.load (test_path + "moved/6.nii.gz").get_fdata().squeeze()
 
-    plot_volume (np.stack ([test_good_fixed, np.zeros (test_bad_fixed.shape), test_good_moving], axis=3),
+    plot_volume (np.stack ([test_good_fixed, test_good_moving, np.zeros (test_bad_fixed.shape)], axis=3),
                      side_view=False,
                      rgb=True,
-                     labels=("Fixed", "Moved using MR", "Moving"))
+                     labels=("Fixed", "Moving", ""))
 
-    plot_volume (np.stack ([test_bad_fixed, np.zeros (test_bad_fixed.shape), test_bad_moving], axis=3),
+    plot_volume (np.stack ([test_bad_fixed, test_bad_moving, np.zeros (test_bad_fixed.shape)], axis=3),
                      side_view=False,
                      rgb=True,
-                     labels=("Fixed", "Moved using MR", "Moving"))
+                     labels=("Fixed", "Moving", ""))
 
     num_workers = 2
     aug_path = "./aug_data/norm_rot0.2_trans20_shearNone/"

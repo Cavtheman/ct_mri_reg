@@ -19,8 +19,8 @@ def normalise_array (arr):
     return (arr-min_val) / (max_val-min_val)
 
 def register (model, fixed, moving, fixed_mask=None, moving_mask=None, transform=True):
-    norm_fixed = normalise_array (fixed.numpy())
-    norm_moving = normalise_array (moving.numpy())
+    norm_fixed = fixed.numpy()
+    norm_moving = moving.numpy()
 
     if fixed_mask is not None:
         norm_fixed = norm_fixed * fixed_mask
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     torch.set_printoptions(sci_mode=False)
 
     num_workers = 0
-    n = 10
+    n = 180
     output_transformed = True
     rigid = True
 
@@ -68,14 +68,13 @@ if __name__ == "__main__":
     model_aff = vxm.tf.networks.VxmAffineFeatureDetector(in_shape, rigid=rigid, make_dense=False)
 
     if rigid:
-        model_aff.load_weights ("synthmorph.rigid.1.h5")
+        #model_aff.load_weights ("synthmorph.rigid.1.h5")
+        model_aff.load_weights ("./freesurfer/models/synthmorph_rigid.h5")
     else:
-        model_aff.load_weights ("synthmorph.affine.2.h5")
+        model_aff.load_weights ("./freesurfer/models/synthmorph_affine.h5")
         #model_aff.load_weights ("synthmorph.affine.crop.h5")
 
     aug_data = SynthradData (aug_path,
-                             #moving_cts=aug_path + "fixed/ct/",
-                             #moving_mrs=aug_path + "fixed/mr/",
                              include_mask=False)
     dataloader = data.DataLoader(aug_data,
                                  batch_size=1,
