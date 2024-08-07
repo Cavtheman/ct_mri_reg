@@ -132,4 +132,4 @@ if __name__ == "__main__":
 
     #segm_output = "./aug_segmentations/"
 
-    predict_and_eval (fixed_folder, moved_folder, segm_output, single=True)
+    predict_and_eval (fixed_folder, moved_folder, segm_output, single=False)

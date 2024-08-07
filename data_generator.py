@@ -11,6 +11,7 @@ from math import ceil
 from torch.utils import data
 from scipy.ndimage import affine_transform
 from torchvision.transforms import ToTensor
+from nibabel.orientations import axcodes2ornt, io_orientation, apply_orientation, inv_ornt_aff
 
 # Normalisation between 0 and 1
 def normalise_array (arr):
@@ -54,11 +55,16 @@ class SynthradData (data.Dataset):
             self.moving_masks = self.__find_files__(img_folder + "moving/mask/")
 
         self.transforms = self.__find_files__(img_folder + "transforms/")
+        self.inv_transforms = self.__find_files__(img_folder + "inv_transforms/")
 
         self.include_mask = include_mask
 
+
     def __len__(self):
         return len(self.fixed_cts)
+
+    def shape (self):
+        return nib.load (self.moving_cts[0]).shape
 
     # Generates one sample of data
     def __getitem__(self, index):
@@ -70,12 +76,12 @@ class SynthradData (data.Dataset):
         ct_moving = nib.load (self.moving_cts[index])
         mr_moving = nib.load (self.moving_mrs[index])
 
-        inv_transform = ct_moving.affine # Doesn't matter which moving image it's from
 
         ct_moving = np.expand_dims (ct_moving.get_fdata(), axis=-1)
         mr_moving = np.expand_dims (mr_moving.get_fdata(), axis=-1)
 
         transform = torch.load (self.transforms[index])
+        inv_transform = torch.load (self.inv_transforms[index])
 
         if self.include_mask:
             mask_fixed = np.expand_dims (nib.load (self.fixed_masks[index]).get_fdata(), axis=-1)
@@ -85,10 +91,11 @@ class SynthradData (data.Dataset):
         else:
             return ct_fixed, mr_fixed, ct_moving, mr_moving, transform, inv_transform
 
+# Won't work with a dataloader, because I would neet to implement a collate_fn function for nifti files
 class AugmentData (data.Dataset):
     # Characterizes a dataset for PyTorch
     # Takes a bunch of arguments for data augmentation as well
-    def __init__(self, ct_paths, mr_paths, mask_paths, rotate=None, shear=None, translate=None, pad_to=None, normalise=False, side_view=False):
+    def __init__(self, ct_paths, mr_paths, mask_paths, rotate=None, shear=None, translate=None, pad_to=None, normalise=False, orientation=None, aug_path=None):
         assert (len (mr_paths) == len (ct_paths))
 
         self.ct_paths = ct_paths
@@ -103,14 +110,31 @@ class AugmentData (data.Dataset):
         self.rotate = rotate
         self.shear = shear
         self.translate = translate
-        self.pad_to = pad_to
         self.normalise = normalise
-        self.side_view = side_view
+        self.orientation = orientation
+        self.aug_path = aug_path
+
+        if pad_to is not None:
+            self.pad_to = pad_to
+        else:
+            self.pad_to = self.__max_size__()
+        print (self.pad_to)
+
+    def __apply_orientation__ (self, nib_img, orientation):
+        new_or = axcodes2ornt (orientation)
+        old_or = io_orientation (nib_img.affine)
+        if (new_or == old_or).all(): return nib_img
+
+        transform = nib.orientations.ornt_transform(old_or, new_or)
+        data = apply_orientation (nib_img.get_fdata(), transform)
+        new_affine = nib_img.affine @ inv_ornt_aff (transform, data.shape)
+        ret_val = nib.Nifti1Image (data, new_affine, header=nib_img.header)
+        return ret_val
 
     def __max_size__(self):
         size = [0,0,0]
         for img in self.ct_paths:
-            img_size = nib.load(img).get_fdata().shape
+            img_size = nib.load(img).shape
             size = [ max (a,b) for a, b in zip (size, img_size) ]
         return size
 
@@ -132,30 +156,80 @@ class AugmentData (data.Dataset):
         mr_path = self.mr_paths[index]
         mask_path = self.mask_paths[index]
 
+
         # Removing the .affine to world coordinates for use with pytorch dataloader.
         # Probably not super good, but augmentation works properly with it
-        ct_fixed = nib.load (ct_path).get_fdata()
-        mr_fixed = nib.load (mr_path).get_fdata()
-        mask = nib.load (mask_path).get_fdata()
+        ct_fixed_nib = nib.load (ct_path)
+        mr_fixed_nib = nib.load (mr_path)
+        mask_nib = nib.load (mask_path)
+
+        if self.orientation is not None:
+            ct_fixed_nib = self.__apply_orientation__ (ct_fixed_nib, self.orientation)
+            mr_fixed_nib = self.__apply_orientation__ (mr_fixed_nib, self.orientation)
+            mask_nib = self.__apply_orientation__ (mask_nib, self.orientation)
+
+        ct_fixed = ct_fixed_nib.get_fdata()
+        mr_fixed = mr_fixed_nib.get_fdata()
+        mask = mask_nib.get_fdata()
 
         if self.normalise:
             ct_fixed = normalise_array (ct_fixed)
             mr_fixed = normalise_array (mr_fixed)
 
-        if self.side_view:
-            ct_fixed = np.flip (np.transpose(ct_fixed, [2,1,0]), axis=0)
-            mr_fixed = np.flip (np.transpose(mr_fixed, [2,1,0]), axis=0)
-
-        if self.pad_to is not None:
+        if self.pad_to:
             ct_fixed = self.__pad_center__(ct_fixed, self.pad_to)
             mr_fixed = self.__pad_center__(mr_fixed, self.pad_to)
             mask = self.__pad_center__(mask, self.pad_to)
+
+            ct_fixed_nib = nib.Nifti1Image (ct_fixed,
+                                            ct_fixed_nib.affine,
+                                            header=ct_fixed_nib.header)
+            ct_fixed_nib.header["dim"][1:4] = self.pad_to
+            mr_fixed_nib = nib.Nifti1Image (mr_fixed,
+                                            mr_fixed_nib.affine,
+                                            header=mr_fixed_nib.header)
+            mr_fixed_nib.header["dim"][1:4] = self.pad_to
+            mask_nib = nib.Nifti1Image (mask,
+                                        mask_nib.affine,
+                                        header=mask_nib.header)
+            mask_nib.header["dim"][1:4] = self.pad_to
 
         mr_moving, transform_mat, inv_transform = self.__augment_image__(mr_fixed)
         ct_moving = affine_transform (ct_fixed, transform_mat, order=0)
         aug_mask = affine_transform (mask, transform_mat, order=0)
 
-        return ct_fixed, mr_fixed, mask, ct_moving, mr_moving, aug_mask, transform_mat, inv_transform
+        mr_aff = mr_fixed_nib.affine @ transform_mat.numpy()
+        mr_header = mr_fixed_nib.header
+        mr_header["dim"][1:4] = mr_moving.shape
+        mr_moving_nib = nib.Nifti1Image (mr_moving, mr_aff, header=mr_header)
+
+        ct_aff = ct_fixed_nib.affine @ transform_mat.numpy()
+        ct_header = ct_fixed_nib.header
+        ct_header["dim"][1:4] = ct_moving.shape
+        ct_moving_nib = nib.Nifti1Image (ct_moving, ct_aff, header=ct_header)
+
+        mask_aff = mask_nib.affine @ transform_mat.numpy()
+        mask_header = mask_nib.header
+        mask_header["dim"][1:4] = aug_mask.shape
+        aug_mask_nib = nib.Nifti1Image (aug_mask, mask_aff, header=mask_header)
+
+        #if self.aug_path is not None:
+        #    nib.save (ct_fixed_nib,
+        #              self.aug_path + f"fixed/ct/{index}.nii.gz")
+        #    nib.save (mr_fixed_nib,
+        #              self.aug_path + f"fixed/mr/{index}.nii.gz")
+        #    nib.save (mask_nib,
+        #              self.aug_path + f"fixed/mask/{index}.nii.gz")
+        #    nib.save (ct_moving_nib,
+        #              self.aug_path + f"moving/ct/{index}.nii.gz")
+        #    nib.save (mr_moving_nib,
+        #              self.aug_path + f"moving/mr/{index}.nii.gz")
+        #    nib.save (aug_mask_nib,
+        #              self.aug_path + f"moving/mask/{index}.nii.gz")
+        #    torch.save (transform_mat, self.aug_path + "transforms/" + f"{index}.pt")
+        #    torch.save (inv_transform, self.aug_path + "inv_transforms/" + f"{index}.pt")
+
+        return ct_fixed_nib, mr_fixed_nib, mask_nib, ct_moving_nib, mr_moving_nib, aug_mask_nib, transform_mat, inv_transform
 
     def __augment_image__(self, data):
         # Rotates nifti image randomly

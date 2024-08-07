@@ -7,30 +7,32 @@ from data_generator import SynthradData
 from utils import plot_volume, normalise_array
 
 if __name__ == "__main__":
-    test_path = "./test/"
-    test_good_fixed = nib.load (test_path + "fixed/2.nii.gz").get_fdata().squeeze()
-    test_good_moving = nib.load (test_path + "moving/2.nii.gz").get_fdata().squeeze()
-    #test_good_moved = nib.load (test_path + "moved/2.nii.gz").get_fdata().squeeze()
-
-    test_bad_fixed = nib.load (test_path + "fixed/6.nii.gz").get_fdata().squeeze()
-    test_bad_moving = nib.load (test_path + "moving/6.nii.gz").get_fdata().squeeze()
-    #test_bad_moved = nib.load (test_path + "moved/6.nii.gz").get_fdata().squeeze()
-
-    plot_volume (np.stack ([test_good_fixed, test_good_moving, np.zeros (test_bad_fixed.shape)], axis=3),
-                     side_view=False,
-                     rgb=True,
-                     labels=("Fixed", "Moving", ""))
-
-    plot_volume (np.stack ([test_bad_fixed, test_bad_moving, np.zeros (test_bad_fixed.shape)], axis=3),
-                     side_view=False,
-                     rgb=True,
-                     labels=("Fixed", "Moving", ""))
+#    test_path = "./test/"
+#    test_good_fixed = nib.load (test_path + "fixed/2.nii.gz").get_fdata().squeeze()
+#    test_good_moving = nib.load (test_path + "moving/2.nii.gz").get_fdata().squeeze()
+#    #test_good_moved = nib.load (test_path + "moved/2.nii.gz").get_fdata().squeeze()
+#
+#    test_bad_fixed = nib.load (test_path + "fixed/6.nii.gz").get_fdata().squeeze()
+#    test_bad_moving = nib.load (test_path + "moving/6.nii.gz").get_fdata().squeeze()
+#    #test_bad_moved = nib.load (test_path + "moved/6.nii.gz").get_fdata().squeeze()
+#
+#    plot_volume (np.stack ([test_good_fixed, test_good_moving, np.zeros (test_bad_fixed.shape)], axis=3),
+#                     side_view=False,
+#                     rgb=True,
+#                     labels=("Fixed", "Moving", ""))
+#
+#    plot_volume (np.stack ([test_bad_fixed, test_bad_moving, np.zeros (test_bad_fixed.shape)], axis=3),
+#                     side_view=False,
+#                     rgb=True,
+#                     labels=("Fixed", "Moving", ""))
 
     num_workers = 2
-    aug_path = "./aug_data/norm_rot0.2_trans20_shearNone/"
-    #aug_path = "./aug_data/norm_rot0.2_trans20_shear0.1/"
-    #aug_path = "./aug_data/rot0.2_trans20_shearNone/"
-    #aug_path = "./aug_data/rot0.2_trans20_shear0.1/"
+    #aug_path = "./aug_data/LIA_rotNone_transNone_shearNone/"
+    aug_path = "./aug_data/LIA_rot0.4_trans40_shearNone/"
+    #aug_path = "./aug_data/LIA_norm_rot0.2_trans20_shearNone/"
+    #aug_path = "./aug_data/LIA_norm_rot0.2_trans20_shear0.1/"
+    #aug_path = "./aug_data/LIA_rot0.2_trans20_shearNone/"
+    #aug_path = "./aug_data/LIA_rot0.2_trans20_shear0.1/"
 
     #ct_mr = nib.load ("ct_mr_moved.nii.gz")
     #mr_mr = nib.load ("mr_mr_moved.nii.gz")
@@ -71,21 +73,22 @@ if __name__ == "__main__":
 
         mr_fixed = normalise_array (mr_fixed.squeeze().numpy())
         mr_moving = normalise_array (mr_moving.squeeze().numpy())
+        ct_moving = normalise_array (ct_moving.squeeze().numpy())
         ct_fixed = normalise_array (ct_fixed.squeeze().numpy())
         mr_mr = normalise_array (mr_mr)
         ct_mr = normalise_array (ct_mr)
 
         #test = np.stack ([mr_moving, ct_fixed, mr_mr], axis=3)
         #plot_volume (ct_mr)
-        #plot_volume (np.stack ([mr_fixed, mr_mr, mr_moving], axis=3),
+        plot_volume (np.stack ([mr_fixed, mr_mr, mr_moving], axis=3),
+                     side_view=True,
+                     rgb=True,
+                     labels=("Fixed", "Moved using MR", "Moving"))
+
+        #plot_volume (np.stack ([mr_mr], axis=3),
         #             side_view=False,
         #             rgb=True,
         #             labels=("Fixed", "Moved using MR", "Moving"))
-
-        plot_volume (np.stack ([mr_mr], axis=3),
-                     side_view=False,
-                     rgb=True,
-                     labels=("Fixed", "Moved using MR", "Moving"))
 
         #plot_volume (np.stack ([mr_fixed, ct_mr, mr_moving], axis=3),
         #             side_view=True,

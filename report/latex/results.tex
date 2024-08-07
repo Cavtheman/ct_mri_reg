@@ -1,0 +1,129 @@
+\begin{table}[h!]
+\centering
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|c|c|c|}
+\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\
+\hline
+No Rotation, No Translation, No Shear & $0$ & $0$ \\
+\hline
+$\theta = \pm 0.4$, $t = \pm 40$, No Shear & 9.2585 & 9.2585 \\
+\hline
+$\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 9.8315 & 12.3868 \\
+\hline
+Normalised, $\theta = \pm 0.4$, $t = \pm 40$, No Shear & 7.4767 & 7.4767 \\
+\hline
+Normalised, $\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 7.4014 & 10.3401 \\
+\hline
+$\theta = \pm 0.2$, $t = \pm 20$, No Shear & 5.8611 & 5.8611 \\
+\hline
+$\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 6.1733 & 7.3278 \\
+\hline
+Normalised, $\theta = \pm 0.2$, $t = \pm 20$, No Shear & 4.1896 & 4.1896 \\
+\hline
+Normalised, $\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 4.3918 & 5.6838 \\
+\hline
+\end{tabular}%
+}
+\caption{MR-MR registration results with different transformations using the baseline affine SynthMorph model.}
+\label{table:mr_mr_results_affine}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|c|c|c|}
+\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\
+\hline
+No Rotation, No Translation, No Shear & 81.4608 & 81.4608 \\
+\hline
+$\theta = \pm 0.4$, $t = \pm 40$, No Shear & 66.2298 & 66.2298 \\
+\hline
+$\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 90.0000 & 90.9563 \\
+\hline
+Normalised, $\theta = \pm 0.4$, $t = \pm 40$, No Shear & 44.1781 & 44.1781 \\
+\hline
+Normalised, $\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 45.2697 & 45.9374 \\
+\hline
+$\theta = \pm 0.2$, $t = \pm 20$, No Shear & 87.5443 & 87.5443 \\
+\hline
+$\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 269.8159 & 276.1376 \\
+\hline
+Normalised, $\theta = \pm 0.2$, $t = \pm 20$, No Shear & 42.0669 & 42.0669 \\
+\hline
+Normalised, $\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 43.9500 & 43.9333 \\
+\hline
+\end{tabular}%
+}
+\caption{CT-MR registration results with different transformations using the baseline affine SynthMorph model.}
+\label{table:ct_mr_results_affine}
+\end{minipage}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|c|c|c|}
+\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\
+\hline
+No Rotation, No Translation, No Shear & $0$ & $0$ \\
+\hline
+$\theta = \pm 0.4$, $t = \pm 40$, No Shear & 7.5015 & 7.5015 \\
+\hline
+$\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 17.7726 & 18.3158 \\
+\hline
+Normalised, $\theta = \pm 0.4$, $t = \pm 40$, No Shear & 8.8842 & 8.8842 \\
+\hline
+Normalised, $\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 19.0528 & 19.1625 \\
+\hline
+$\theta = \pm 0.2$, $t = \pm 20$, No Shear & 4.5461 & 4.5461 \\
+\hline
+$\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 17.1753 & 17.1819 \\
+\hline
+Normalised, $\theta = \pm 0.2$, $t = \pm 20$, No Shear & 4.6545 & 4.6545 \\
+\hline
+Normalised, $\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 17.3669 & 17.2396 \\
+\hline
+\end{tabular}%
+}
+\caption{MR-MR registration results with different transformations using the baseline rigid SynthMorph model.}
+\label{table:mr_mr_results_rigid}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|c|c|c|}
+\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\
+\hline
+No Rotation, No Translation, No Shear & 60.5308 & 60.5308 \\
+\hline
+$\theta = \pm 0.4$, $t = \pm 40$, No Shear & 54.8180 & 54.8180 \\
+\hline
+$\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 61.0844 & 62.0519 \\
+\hline
+Normalised, $\theta = \pm 0.4$, $t = \pm 40$, No Shear & 24.9550 & 24.9550 \\
+\hline
+Normalised, $\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 32.4703 & 33.4180 \\
+\hline
+$\theta = \pm 0.2$, $t = \pm 20$, No Shear & 50.7994 & 50.7994 \\
+\hline
+$\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 56.2187 & 57.1268 \\
+\hline
+Normalised, $\theta = \pm 0.2$, $t = \pm 20$, No Shear & 23.7351 & 23.7351 \\
+\hline
+Normalised, $\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 31.8721 & 32.9091 \\
+\hline
+\end{tabular}%
+}
+\caption{CT-MR registration results with different transformations using the baseline rigid SynthMorph model.}
+\label{table:ct_mr_results_rigid}
+\end{minipage}
+\end{table}
