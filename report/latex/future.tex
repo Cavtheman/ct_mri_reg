@@ -1,0 +1,8 @@
+\subsection{Validation of model multi-modal capabilities}
+The dataset in this paper consists only of T1 MRI scans, and while this is one of the modalities used in the original Synthmorph paper, we have not shown that the new capabilities demonstrated here also extend to the various other modalities of MRI scans. Evaluating this would require finding a new dataset. Given the capabilities of Synthmorph already, it would not come as a surprise that this extension will generalise.
+
+\subsection{Expansion of model capabilities}
+Given that this paper has shown the potential for the Synthmorph network to be trained to work in more than just the original MRI, further investigation should explore whether this capability can be extended to more types of scans.
+
+\subsection{CT-MRI transformation}
+Having achieved successful cross-domain registration, the logical next step would be to try and convert between CT and MRI scans. This has been demonstrated previously to be possible by Lyu \& Wang 2022\cite{diffusion_transformation}. However, methods based on diffusion have been shown to sometimes exhibit the phenomenon known as ``hallucinations''\cite{diffusion_hallucination}, where the model seems to make up things that look plausible, but have no basis in reality. This is of course an issue when dealing with medical images that could be used for diagnosis and treatment of patients. If a diffusion model hallucinates when generating an image in this context, it could lead to misdiagnoses and incorrect treatments. Creating a network that doesn't hallucinate would be a big step forward in that context.

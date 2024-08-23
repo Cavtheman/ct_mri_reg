@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 from torch.utils.data import DataLoader
 from data_generator import SynthradData
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 
 # Function to convert PyTorch tensors to TensorFlow tensors
@@ -31,13 +32,6 @@ def inverse_loss (target, predicted):
     predicted = tf.concat ((predicted, tf.constant([[[0,0,0,1]]], dtype=tf.float32)), axis=1)
     return tf.norm (tf.linalg.matmul (target, predicted))
 
-class LossHistory(tf.keras.callbacks.Callback):
-    def on_train_begin(self, logs=None):
-        self.losses = []
-
-    def on_epoch_end(self, epoch, logs=None):
-        self.losses.append(logs.get('loss'))
-
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
 
@@ -45,17 +39,26 @@ if __name__ == "__main__":
     num_workers = 0
 
     data_folder = sys.argv[1]
-    rigid = sys.argv[2].lower() in ("true", "1", "yes")
+    val_folder = sys.argv[2]
+    rigid = sys.argv[3].lower() in ("rigid", "true", "1", "yes")
 
     save_folder = data_folder + "finetune_rigid/" if rigid else data_folder + "finetune_affine/"
     os.makedirs (save_folder, exist_ok=True)
 
     train_data = SynthradData (data_folder,
                                include_mask=False)
+    val_data = SynthradData (val_folder,
+                             include_mask=False)
+
     dataloader = DataLoader(train_data,
                             batch_size=1,
                             shuffle=True,
                             num_workers=num_workers)
+    valloader = DataLoader(val_data,
+                           batch_size=1,
+                           shuffle=False,
+                           num_workers=num_workers)
+
     in_shape = train_data.shape ()
     tf_dataset = tf.data.Dataset.from_generator(
         lambda: convert_to_tf_dataset(dataloader),
@@ -63,6 +66,14 @@ if __name__ == "__main__":
                            tf.TensorSpec(shape=(None,)+in_shape, dtype=tf.float32),),
                           tf.TensorSpec(shape=(None, 4, 4), dtype=tf.float32)))
     tf_dataset = tf_dataset.repeat()
+
+    val_dataset = tf.data.Dataset.from_generator(
+        lambda: convert_to_tf_dataset(valloader),
+        output_signature=((tf.TensorSpec(shape=(None,)+in_shape, dtype=tf.float32),
+                           tf.TensorSpec(shape=(None,)+in_shape, dtype=tf.float32),),
+                          tf.TensorSpec(shape=(None, 4, 4), dtype=tf.float32)))
+    #val_dataset = val_dataset.repeat()
+
 
     model = vxm.tf.networks.VxmAffineFeatureDetector(in_shape, rigid=rigid, make_dense=False)
 
@@ -75,25 +86,39 @@ if __name__ == "__main__":
 
     model.compile (optimizer=tf.keras.optimizers.Adam(learning_rate=1e-4), loss=inverse_loss)
 
-    loss_history = LossHistory()
-    #strategy = tf.distribute.MirroredStrategy()
+    model_save = save_folder + "synthmorph_epoch{epoch:02d}.h5"
+    checkpoint = ModelCheckpoint(filepath=model_save,
+                                 save_weights_only=False,
+                                 monitor='val_loss',
+                                 mode='min',
+                                 save_best_only=False
+                                 )
+
     model.fit (tf_dataset,
                epochs=epochs,
                steps_per_epoch=len(dataloader),
-               callbacks=[loss_history])
+               validation_data=val_dataset,
+               callbacks=[checkpoint])
+
     #model.fit (tf_dataset,
     #           epochs=epochs,
     #           steps_per_epoch=5,
-    #           callbacks=[loss_history])
+    #           validation_data=val_dataset,
+    #           callbacks=[checkpoint])
 
-    model.save(save_folder + "synthmorph_model.h5")
+    #model.save(save_folder + "synthmorph_model.h5")
 
-    np.save(save_folder + "loss_history.npy", np.array(loss_history.losses))
+    np.save(save_folder + "loss_history.npy", np.array(model.history.history["loss"]))
+    np.save(save_folder + "val_history.npy", np.array(model.history.history["val_loss"]))
 
-    # Plot and save the loss graph
+
     plt.figure()
-    plt.plot(range(1, epochs + 1), loss_history.losses, marker="o", linestyle="-")
-    plt.title("Training Loss Over Epochs")
+    plt.plot(range(1, epochs + 1), model.history.history["loss"], linestyle="-", label="Training Loss")
+    plt.plot(range(1, epochs + 1), model.history.history["val_loss"], linestyle="-", label="Validation Loss")
+
+    plt.title("Training and Validation Loss during training")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
+
+    plt.legend()
     plt.savefig(save_folder + "training_loss.png")

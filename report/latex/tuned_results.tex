@@ -1,0 +1,70 @@
+After training both the affine and rigids versions of the Synthmorph model on our augmented datasets, we find that the network starts outperforming the baseline model. For MRI-MRI registration this can easily be explained via slight overfitting to the dataset at hand. This can be seen in Tables \ref{table:mr_mr_affine_tuned_results} and \ref{table:mr_mr_rigid_tuned_results}.
+
+For the CT-MRI results we also see significant improvements thanks to the training. The $\|A\hat{B} - I\|$ and $\|B - \hat{B}\|$ loss values can be seen in Tables \ref{table:ct_mr_affine_tuned_results} and \ref{table:ct_mr_rigid_tuned_results} to have improved to a point where the CT-MRI registrations perform roughly equivalently to the MRI-MRI registration.
+
+% Tuned with $\|A\hat{B} - I\|$ loss
+\begin{table}[h!]
+\centering
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cc}\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\\hline
+$\theta \pm 0.4$, $T \pm 40$, No Shear                 & 4.3242 & 4.3242 \\
+$\theta \pm 0.4$, $T \pm 40$, \text{Shear} $= \pm 0.1$ & 5.5293 & 9.5700 \\
+$\theta \pm 0.2$, $T \pm 20$, No Shear                 & 3.2817 & 3.2817 \\
+$\theta \pm 0.2$, $T \pm 20$, \text{Shear} $= \pm 0.1$ & 4.5198 & 6.0682 \\\hline
+\end{tabular}%
+}
+\caption{MRI-MRI registration results with affine model tuned on the datasets with the shown parameters.}
+\label{table:mr_mr_affine_tuned_results}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cc}\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\\hline
+$\theta \pm 0.4$, $T \pm 40$, No Shear                 & 3.6186 & 3.6186 \\
+$\theta \pm 0.4$, $T \pm 40$, \text{Shear} $= \pm 0.1$ & 4.1670 & 9.1483 \\
+$\theta \pm 0.2$, $T \pm 20$, No Shear                 & 2.7113 & 2.7113 \\
+$\theta \pm 0.2$, $T \pm 20$, \text{Shear} $= \pm 0.1$ & 3.2596 & 5.2754 \\\hline
+\end{tabular}%
+}
+\caption{CT-MRI registration results with affine model tuned on the datasets with the shown parameters.}
+\label{table:ct_mr_affine_tuned_results}
+\end{minipage}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cc}\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\\hline
+$\theta \pm 0.4$, $T \pm 40$, No Shear                 & 3.4790  & 3.4790  \\
+$\theta \pm 0.4$, $T \pm 40$, \text{Shear} $= \pm 0.1$ & 10.4729 & 12.3017 \\
+$\theta \pm 0.2$, $T \pm 20$, No Shear                 & 3.0415  & 3.0415  \\
+$\theta \pm 0.2$, $T \pm 20$, \text{Shear} $= \pm 0.1$ & 8.6077  & 9.3741  \\\hline
+\end{tabular}%
+}
+\caption{MRI-MRI registration results with rigid model tuned on the datasets with the shown parameters.}
+\label{table:mr_mr_rigid_tuned_results}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cc}\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\\hline
+$\theta \pm 0.4$, $T \pm 40$, No Shear                 & 3.4099 & 3.4099 \\
+$\theta \pm 0.4$, $T \pm 40$, \text{Shear} $= \pm 0.1$ & 5.8691 & 9.6244 \\
+$\theta \pm 0.2$, $T \pm 20$, No Shear                 & 2.3015 & 2.3015 \\
+$\theta \pm 0.2$, $T \pm 20$, \text{Shear} $= \pm 0.1$ & 4.4737 & 6.3426 \\\hline
+\end{tabular}%
+}
+\caption{CT-MRI registration results with rigid model tuned on the datasets with the shown parameters.}
+\label{table:ct_mr_rigid_tuned_results}
+\end{minipage}
+\end{table}

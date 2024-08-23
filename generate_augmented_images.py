@@ -21,7 +21,7 @@ def __apply_orientation__ (nib_img, orientation):
         ret_val = nib.Nifti1Image (data, new_affine, header=nib_img.header)
         return ret_val
 
-def generate_images(n=None, rotate=None, translate=None, shear=None, normalise=False, pad_to=None, orientation=None):
+def generate_images(n=None, rotate=None, translate=None, shear=None, normalise=True, pad_to=None, orientation=None, transform_fixed=False, val=False, test=False):
     path = "./data/synthrad/brain/"
     aug_path = "./aug_data/"
     all_image_folders = [ path + img + "/" for img in os.listdir (path)]
@@ -35,8 +35,9 @@ def generate_images(n=None, rotate=None, translate=None, shear=None, normalise=F
 
     folder = f"rot{rotate}_trans{translate}_shear{shear}/"
     if normalise: folder = "norm_" + folder
-    if orientation is not None: folder = f"{''.join (orientation)}_{folder}"
-
+    #if orientation is not None: folder = f"{''.join (orientation)}_{folder}"
+    if val: folder = "val_" + folder
+    elif test: folder = "test_" + folder
     # Making sure all the relevant folders have been created
     os.makedirs(f"{aug_path+folder}fixed/ct/", exist_ok=True)
     os.makedirs(f"{aug_path+folder}fixed/mr/", exist_ok=True)
@@ -99,7 +100,8 @@ def generate_images(n=None, rotate=None, translate=None, shear=None, normalise=F
 if __name__ == "__main__":
     num_workers = 0
 
-    n = 720
+    #n = 720
+    n = 180
 
     # Arguments varied at runtime
     rotate = None if sys.argv[1] == "0" else float(sys.argv[1])
@@ -107,6 +109,7 @@ if __name__ == "__main__":
     shear = None if sys.argv[3] == "0" else float(sys.argv[3])
     normalise = sys.argv[4].lower() in ("true", "1", "yes")
     orientation = tuple (sys.argv[5])
+    transform_fixed = sys.argv[6].lower() in ("true", "1", "yes")
 
     # not necessary since orientation is done here. But kept just in case
     if orientation == ("L","I","A"):
@@ -130,7 +133,10 @@ if __name__ == "__main__":
                      shear=shear,
                      normalise=normalise,
                      pad_to=pad_to,
-                     orientation=orientation)
+                     orientation=orientation,
+                     transform_fixed=transform_fixed,
+                     val=False,
+                     test=True)
 
     #generate_images (n=n, rotate=rotate, translate=translate, shear=0.1, normalise=True)
     #generate_images (n=n, rotate=rotate, translate=translate, shear=None, normalise=True)

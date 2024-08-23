@@ -1,18 +1,172 @@
-Because good medical imaging data can be difficult to come by, augmenting existing data to effectively multiply the amount of data you have by a significant margin becomes crucial. Medical imaging datasets are often limited due to the high cost and complexity of acquiring such data, coupled with ethical and privacy concerns that restrict their availability. Data augmentation techniques such as rotation, scaling, translation, and noise injection can generate numerous variations of the original images, thereby expanding the dataset without needing additional real images. This process not only increases the quantity of data but also enhances the diversity of the dataset, making machine learning models more robust and generalizable. By creating a richer and more varied training set, data augmentation helps in overcoming the limitations posed by small datasets, ultimately leading to more accurate and reliable model performance in clinical applications. In this project, I will be using some of these techniques to effectively generate an entirely new dataset of unregistered images.
+In the context of training a network for image registration, it is crucial to have access to relevant pairs of volumes that require registration. However, acquiring unregistered image pairs, particularly those with known and accurate registration transformations, presents significant challenges. To address this, we augment the existing SynthRAD dataset, which consists of 180 preprocessed and registered image pairs, by applying a limited set of transformations. While it may be safe to assume that the fixed scan that will be registered to is centred, we saw negligible difference in the baseline Synthmorph performance on non-centered data. Therefore, we have elected to transform both the fixed and moving volumes, providing better generalisation, and preventing the trained models from degenerating into moving the subject to the centre, regardless of input. For each pair of CT and T1 MRI scans, we output two different pairs of volumes, one pair marked and utilised as the fixed volumes, and one as the moving. For each CT-MRI pair, they are transformed identically, to keep them registered to each other. The fixed and moving pairs are transformed with identical parameters given to the random functions, but the fixed and moving transformations are chosen independently.
 
-There are a few caveats and potential problems that generating unregistered images through random affine transformations may cause, however. First, applying affine transformations to images can sometimes lead to unrealistic variations that do not accurately reflect the natural variations found in real medical images. For instance, excessive shearing or scaling can distort anatomical structures in a way that does not occur in actual imaging scenarios, which may confuse the model and lead to poor generalization to real-world data.
+The limited set of transformations is used to preserve the clinical relevance of the original scans while introducing just enough variability to train the registration model effectively. This balance is vital to avoid creating synthetic data that might not be representative of actual medical images, which could lead to a model that performs well on our artificial data but fails in clinical practice, or learns irrelevant information.
 
-Furthermore, these transformations might inadvertently introduce artifacts or noise that were not present in the original images, potentially skewing the model’s learning process. This may come in the form of accidentally randomly cutting off relevant pieces of the image during the affine transformations. This can degrade the quality of the images and affect the model's ability to learn meaningful features.
+Both the CT and MRI scans are normalised between 0 and 1 as part of preprocessing. While normalisation of data is common practice, it can be potentially problematic when working with CT scans. Unlike MRI scans, where intensity values are typically relative and vary based on tissue type and scan parameters, CT scans have intensity values corresponding to real physical phenomena. These values can be clinically meaningful and correspond to specific tissue densities, such as bone, air, and soft tissue. However, while the specific values are lost when normalised in this way, the relative values are not.
 
-Another potential challenge to is ensuring that the transformations maintain the clinical relevance of the images. For example, medical images often need to retain specific orientations and scales for accurate diagnosis and analysis. Randomly altering these properties without consideration of clinical context could render the images less useful or even misleading for model training purposes. I will therefore be using a few metrics, described in section \ref{method:criteria}, to validate that the clinical relevance has not been lost.
+However, preliminary baseline experiments with the Synthmorph models showed that it performed markedly worse when normalisation was not performed. Given that this normalisation is performed in the original Synthmorph paper\cite{synthmorph}, we elected not to pursue this any further. As a result, all results not in the appendix are with normalised CT and T1 MRI scans, unless specifically noted otherwise. These baseline results can be seen in Tables \ref{appendix:mr_mr_results_affine}-\ref{appendix:ct_mr_results_rigid} in the appendix.
 
-Below, I will outline the key components and methods used in this data generation process. To help figure out which methods and augmentation parameters give better results, I generate several different versions of the dataset, clearly labelled and separated. To help ensure that
+The remainder of the augmentation process involves applying standard rigid and affine transformations, which are varied across four generated datasets to evaluate the performance of different methods and models. The primary objective is to determine whether smaller, more clinically realistic transformations or larger, less realistic ones yield better results for training. Three distinct parameters are varied during training, each with separate components for each spatial dimension. However, not all aspects of the affine transformation space are utilised. Specifically, neither reflection nor scaling is applied.
+
+Reflection is avoided due to the training regimen of the original Synthmorph model, which is trained to register volumes exclusively in the left-inferior-anterior (LIA) orientation. This model limitation was not well-documented, leading to significant challenges and time spent troubleshooting why the model initially failed when applied to the SynthRAD data, which is provided in a left-posterior-superior (LPS) orientation by default. Applying reflection would further exacerbate this issue, rendering the model non-functional. Additionally, given that the brain is not symmetrical in function, reflection could introduce additional inaccuracies when evaluating performance with the SynthSeg model\cite{synthseg1}\cite{synthseg2}.
+
+Scaling is also omitted, as the Synthmorph model expects inputs to be standardised to 1mm$^3$ voxels. Any further scaling, in either direction, would likely degrade the model's performance without providing any practical benefit, as the scans can already be easily scaled to this voxel size. This decision ensures that the augmented data remains both realistic and compatible with the model's expectations.
+
+Thus we are left with rotation, translation, and shear as the primary transformations employed in the augmentation process, though shear is not always applied. Each of these transformations includes components along all three spatial axes. Given that the scans are 3-dimensional, the affine matrices differ from the more commonly encountered 2-dimensional variants. Generalised 3D rotational matrices for each axis are shown below, each taking an angle $\theta$ in radians:
 
 \begin{align*}
+  R_x(\theta_x) =
   \begin{pmatrix}
-    a_{11} & a_{12} & a_{13} & t_x \\
-    a_{21} & a_{22} & a_{23} & t_y \\
-    a_{31} & a_{32} & a_{33} & t_z \\
+    1 & 0 & 0 & 0 \\
+    0 & \cos\theta_x & -\sin\theta_x & 0 \\
+    0 & \sin\theta_x & \cos\theta_x & 0 \\
     0 & 0 & 0 & 1
   \end{pmatrix}
 \end{align*}
+\begin{align*}
+  R_y(\theta_y) =
+  \begin{pmatrix}
+    \cos\theta_y & 0 & \sin\theta_y & 0 \\
+    0 & 1 & 0 & 0 \\
+    -\sin\theta_y & 0 & \cos\theta_y & 0 \\
+    0 & 0 & 0 & 1
+  \end{pmatrix}
+\end{align*}
+\begin{align*}
+  R_z(\theta_z) =
+  \begin{pmatrix}
+    \cos\theta_z & -\sin\theta_z & 0 & 0 \\
+    \sin\theta_z & \cos\theta_z & 0 & 0 \\
+    0 & 0 & 1 & 0 \\
+    0 & 0 & 0 & 1
+  \end{pmatrix}
+\end{align*}
+
+For simplicity of implementation, these matrices are implemented separately. Since these are linear transformations, calculating the dot product of these matrices to achieve a singular rotation matrix is equivalent to performing each rotation separately. As such, we combine them, rotating around the $x$-axis first, then the $y$- and $z$-axes. For the data generation, values of $\theta$ are picked uniformly at random in the ranges $\pm0.2$ and $\pm0.4$ radians. Later in this paper, $\theta\pm0.2$ and $\theta\pm0.4$ will be used as shorthand to denote these distributions. $0.2$ radians corresponds roughly to $11$ and $22$ degrees respectively, chosen such that $\pm0.2$ represents a roughly realistic sample, where patient movement could plausibly be the cause of the extra rotation. The other, larger rotations are chosen to determine whether more variation will help the model generalise better. Since the point of this project is to demonstrate capabilities with CT scans, which may be used for more time-sensitive diagnoses operations, allowing more noise in the form of extra rotations should allow for more robust models. The resulting rotation matrix can be seen below. Just for ease of display here, the bottom row and rightmost column the matrix is removed, as it has no effect on rotation, and can be appended with no issue.
+
+\begin{align}
+  R &= R_z(\theta_z) R_y(\theta_y) R_x(\theta_x)\notag\\
+  &=
+  \begin{pmatrix}
+    \cos\theta_y\cos\theta_z & \sin\theta_x\sin\theta_y\cos\theta_z \text{-} \cos\theta_x\sin\theta_z& \cos\theta_x\sin\theta_y\cos\theta_z \text{+} \sin\theta_x\sin\theta_z\\
+    \cos\theta_y\sin\theta_z & \sin\theta_x\sin\theta_y\sin\theta_z \text{+} \cos\theta_x\cos\theta_z& \cos\theta_x\sin\theta_y\sin\theta_z \text{-} \sin\theta_x\cos\theta_z\\
+    \text{-}\sin\theta_y & \sin\theta_x\cos\theta_z & \cos\theta_x\cos\theta_y
+  \end{pmatrix}\label{eq:rot_matrix}
+\end{align}
+
+Simple translation is easier, simply corresponding to values in the rightmost column. Similar to rotation, values of $t$ are picked uniformly at random in the ranges $\pm20$ and $\pm40$, corresponding to $20$ and $40$ voxels respectively. Due to the 1mm$^3$ voxels, this corresponds to and equal amount of millimetres. $T\pm20$ and $T\pm40$ will be used as shorthand for this, like with rotation. Like with the rotational values, these values have been picked to represent a roughly realistic sample, and a more extreme example.
+
+\begin{align*}
+  T &=
+  \begin{pmatrix}
+    1 & 0 & 0 & t_x \\
+    0 & 1 & 0 & t_y \\
+    0 & 0 & 1 & t_z \\
+    0 & 0 & 0 & 1
+  \end{pmatrix}
+\end{align*}
+
+Affine shear matrices are similar to the rotational matrices in their makeup. Each non-diagonal value in the rotational part of the matrix corresponds to a shear over a specific axis.However, unlike rotational transformations, shear is not a phenomenon typically encountered in properly calibrated medical scanners. As a result, the values chosen for shear in this study are intentionally smaller. And indeed, for half the datasets generated in this paper, no shear is applied. For the other half, shear is applied in the same fashion as rotation and translation, chosen uniformly at random in the interval $\pm0.1$. The reasoning behind applying shear to this data, is that we are training both a rigid and affine transformation model to register, and the extra parameters the affine model has to work with may allow for it to more easily converge on useful solutions, even if it does not need to make non-rigid solutions. Nonetheless, both models, rigid and affine, are trained on datasets with and without shear.
+
+\begin{align*}
+  S &=
+  \begin{pmatrix}
+    1 & s_{xy} & s_{xz} & 0 \\
+    s_{yx} & 1 & s_{yz} & 0 \\
+    s_{zx} & s_{zy} & 1 & 0 \\
+    0 & 0 & 0 & 1
+  \end{pmatrix}
+\end{align*}
+
+One problem arises when applying these transformations however, and that is the fact that the rotation is around coordinate $(0,0,0)$. In the ideal case, that would be the middle of the scan, but that is not the case here, where $(0,0,0)$ is a corner of the volume. To correct for this fact, changes need to be made to the translational matrix, to effectively change the centre of rotation. Note that $R$ in this refers specifically to the form given in Equation \ref{eq:rot_matrix}, without a fourth column or row. $|V_{x,y,z}|$ refers to the size of the scan volume, in each axis, in voxels.
+
+\begin{align*}
+  \begin{pmatrix}
+    t_x'\\
+    t_y'\\
+    t_z'
+  \end{pmatrix}
+  &=
+  \begin{pmatrix}
+    t_x\\
+    t_y\\
+    t_z
+  \end{pmatrix}
+  -
+  \left(
+  \begin{pmatrix}
+    0.5|V_x| \\
+    0.5|V_y| \\
+    0.5|V_z| \\
+  \end{pmatrix}
+  -
+  R
+  \begin{pmatrix}
+    0.5|V_x| \\
+    0.5|V_y| \\
+    0.5|V_z| \\
+  \end{pmatrix}
+  \right)\\
+  T' &=
+  \begin{pmatrix}
+    1 & 0 & 0 & t_x' \\
+    0 & 1 & 0 & t_y' \\
+    0 & 0 & 1 & t_z' \\
+    0 & 0 & 0 & 1
+  \end{pmatrix}
+\end{align*}
+
+The final affine matrix $A$ used to transform the volumes is then calculated by taking the dot product of all these, where $R_{full}$ denotes $R$ with an extra column and row, to be a valid affine matrix:
+\begin{align*}
+  A = S\;R_{full}\;T'
+\end{align*}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{c|ccc}
+\hline
+Dataset Parameters                          & Training Set & Validation Set & Test Set \\\hline
+$\theta \pm 0.4$, $T \pm 40$, No Shear      & 720          & 180            & 180      \\
+$\theta \pm 0.4$, $T \pm 40$, Shear$\pm0.1$ & 720          & 180            & 180      \\
+$\theta \pm 0.2$, $T \pm 20$, No Shear      & 720          & 180            & 180      \\
+$\theta \pm 0.2$, $T \pm 20$, Shear$\pm0.1$ & 720          & 180            & 180      \\\hline
+\end{tabular}
+\caption{Size of various Training, Validation, and Test Sets}
+\label{table:data_sizes}
+\end{table}
+
+With all of these transformations, we have generated a training set containing 720 pairs of scans, while validation and test sets each consist of just 180 pairs for each set of generation parameters. With this distribution of data, each training set contains four versions of each original image, each transformed differently, while the test and validation data contain exactly one transformed original.
+
+
+
+%A matrix like this can be inverted analytically, and this will be used to create a metric for determining the closeness of the predicted transformations by the Synthmorph model. The inversion requires a bit of explanation however. Consider the general affine transformation matrix:
+%\begin{align*}
+%  A =
+%  \begin{pmatrix}
+%    \begin{array}{c|c}
+%      R & t \\
+%      \hline
+%      0 & 1 \\
+%    \end{array}
+%  \end{pmatrix}
+%  &=
+%  \begin{pmatrix}
+%    a_{11} & a_{12} & a_{13} & t_x \\
+%    a_{21} & a_{22} & a_{23} & t_y \\
+%    a_{31} & a_{32} & a_{33} & t_z \\
+%    0 & 0 & 0 & 1
+%  \end{pmatrix}
+%\end{align*}
+%
+%Where $R$ corresponds to the rotation matrix and $t$ corresponds to the vector $(t_x,t_y,t_z)^T$. Because $R$ is unitary, its transpose is equivalent to its inverse. The inverse of a translation is simply the negative, however the inverse rotation must also be applied. Therefore, the inverse of the original affine matrix is structured as follows:
+%
+%\begin{align*}
+%  A^{-1} =
+%  \begin{pmatrix}
+%    \begin{array}{c|c}
+%      R^T & R^T(-t) \\
+%      \hline
+%      0 & 1 \\
+%    \end{array}
+%  \end{pmatrix}
+%\end{align*}

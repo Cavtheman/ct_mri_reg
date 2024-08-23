@@ -1,0 +1,50 @@
+The training process for the Synthmorph model in this paper is not performed in the same was as it was originally trained. Instead of working with completely synthetic images and computing the Dice loss over corresponding label maps, the training performed in this paper uses real, but affinely transformed images as data. This lets us ignore any label maps during training, and use a much simpler loss function. When generating transformed images, both the affine matrix ($A$) and its inverse ($B$) used to generate it are saved for later use. Say that a volume in the training set is transformed from its original using an affine matrix $A$, and its inverse matrix $B$ is generated alongside it. Then the following statements will hold:
+\begin{align*}
+  AB &= I\\
+  AB - I &=
+  \begin{pmatrix}
+    0&0&0&0\\
+    0&0&0&0\\
+    0&0&0&0\\
+    0&0&0&0
+  \end{pmatrix}\\
+  \|AB - I\| &= 0
+\end{align*}
+With this setup, given the fixed volume, and the volume transformed by affine matrix $A$, Synthmorph will then output an affine matrix $\hat{B}$. This means we can then use the $\|A\hat{B} - I\|$ as a measure of how close $\hat{B}$ is to the inverse of $A$. Importantly, this also means that no output volume needs to be generated, greatly speeding up training time. This approach simplifies training, by focusing on the affine transformations rather than relying on labeled data, while still ensuring that the transformations can be accurately reversed.
+
+An additional similar metric is also used in this paper to evaluate performance, but is not used during training. It is based off of similar principles, leading to the loss function $\|B-\hat{B}\|$.
+\begin{align*}
+  B-B &=
+  \begin{pmatrix}
+    0&0&0&0\\
+    0&0&0&0\\
+    0&0&0&0\\
+    0&0&0&0
+  \end{pmatrix}\\
+  \|B-B\| &= 0
+\end{align*}
+
+Both of these metrics are quite simple, and make for easy fine-tuning of the Synthmorph models. However, while they model differences and errors in transformations well, they do not account for anatomical details. Therefore, we have also included a variant of the Mutual Information (MI) metric where it is normalised between $0$ and $1$, which has been demonstrated to be a good metric for registration\cite{mi}, taking the actual transformed outputs of Synthmorph and comparing to each other.
+
+Mutual Information is a measure based in the field of information theory, which can quantify the amount of information able to be obtained from one random variable through another. In an image registration context, this is done by evaluating how much knowing the intensity distribution of one image reduces uncertainty about the intensity distribution of another. When working with continuous intensity values, these are put in several intensity bins and treated as equivalent. For this, the entropy function is important:
+\begin{align*}
+  H(A) &= -\sum_ip(A_i)\text{log}p(A_i)
+\end{align*}
+Where $p(A_i)$ denotes the probability of a pixel having intensity $A_i$, summing over all intensity bins. With these bins, the MI is then calculated using the following formula:
+\begin{align*}
+  \text{MI}(A,B) &= H(A) + H(B) - H(A,B)
+\end{align*}
+However, this measure can grow potentially infinitely, so we want to normalise it for easier training. This is done as follows:
+\begin{align*}
+  \text{NMI}(A,B) &= \frac{2\cdot\text{MI}(A,B)}{H(A)+H(B)}
+\end{align*}
+This Normalised Mutual Information (NMI) is thus one of the metrics that will be used in the rest of this paper to evaluate the performance of the registration. For the purposes of this paper, the NMI is always calculated between the moved and fixed MRI scans. This is also true when evaluating CT-MRI registration, as there is always an MRI counterpart to the transformed CT scan that has been transformed using the same parameters.
+
+The Dice metric is utilised in this paper in much the same manner as the original Synthmorph paper, but is only used for evaluation purposes. However, since the SynthRAD data has not been segmented, we use the SynthSeg model to provide a segmentation of the fixed image, which is then used as the ground truth. When evaluating the registration performance, SynthSeg is also used to segment the moved image. These two segmentations are then used to calculate the Dice score, providing a measure of how well the registration has preserved anatomical structures.
+
+It should be noted that there are a lot of classes in the SynthSeg output, and as such the Dice score is calculated for each one separately. Doing it this way means that we can read any voxels with the given class a True value, and any other as False, repeating over all classes. Given two volumes, A and B, we can then calculate the Dice score as follows:
+\begin{align}
+\text{Dice}(A, B) &= \frac{2 \times |A \cap B|}{|A| + |B|}
+\end{align}\label{eq:dice}
+
+%If there is complete overlap between the two segmentations, then we should expect a Dice score of 1.

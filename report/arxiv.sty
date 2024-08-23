@@ -23,6 +23,8 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{amsmath}
+\usepackage{multirow}
+
 \DeclareMathOperator*{\argmax}{argmax}
 
 % set page geometry
@@ -30,13 +32,14 @@
 \AtBeginDocument{
   \newgeometry{
     textheight=9in,
-    textwidth=6.5in,
+    textwidth=5.5in,
     top=1in,
     headheight=14pt,
     headsep=25pt,
     footskip=30pt
   }
 }
+\renewcommand{\baselinestretch}{1.1}
 
 \widowpenalty=10000
 \clubpenalty=10000
@@ -274,9 +277,10 @@
 % abstract styling
 \renewenvironment{abstract}
 {
-  \centerline
-  {\large \bfseries \scshape Abstract}
+  %\centerline
+  %{\bfseries Abstract}
   \begin{quote}
+    {\bfseries Abstract.}
 }
 {
   \end{quote}

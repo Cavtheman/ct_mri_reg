@@ -1,0 +1,41 @@
+\begin{figure}
+\centering
+\captionsetup{justification=centering}
+\includegraphics[width=0.23\textwidth]{images/loss_0.2_20_0.1_rigid.png}
+\includegraphics[width=0.23\textwidth]{images/loss_0.2_20_None_rigid.png}
+\includegraphics[width=0.23\textwidth]{images/loss_0.2_20_0.1_affine.png}
+\includegraphics[width=0.23\textwidth]{images/loss_0.2_20_None_affine.png}
+\\
+\includegraphics[width=0.23\textwidth]{images/loss_0.4_40_0.1_rigid.png}
+\includegraphics[width=0.23\textwidth]{images/loss_0.4_40_None_rigid.png}
+\includegraphics[width=0.23\textwidth]{images/loss_0.4_40_0.1_affine.png}
+\includegraphics[width=0.23\textwidth]{images/loss_0.4_40_None_affine.png}
+\caption{Training loss for fine-tuning both the rigid and affine Synthmorph models, on datasets with various generation parameters.}\label{fig:training_loss}
+\end{figure}
+
+Training of the of the Synthmorph network in this paper is very much standard, by the book. After the augmented datasets have been generated, the CT and MRI pairs are fed to the model, using the specified $\|A\hat{B} - I\|$ loss, using a learning rate of 1e-4. For each of the datasets, two models are trained for comparison; one rigid and one affine. All of the models are trained on the training dataset detailed in Table \ref{table:data_sizes} for 20 epochs, and validated between each epoch. A checkpoint model is also saved for each epoch, and after training is finished, the model that performed best on the validation dataset is used for further testing and final evaluation. The training process of each of these models can be seen in Figure \ref{fig:training_loss}. The models that performed best on the validation set can be seen in Table \ref{table:chosen_models}
+
+\begin{table}[h!]
+  \centering
+  \begin{tabular}{c|cc}
+
+    \multirow{2}{*}{Dataset Parameters}         & \multicolumn{2}{|c}{Epoch} \\\cline{2-3}
+                                                & Rigid model & Affine model \\\hline
+    $\theta \pm 0.4$, $T \pm 40$, No Shear      & 19          & 18           \\
+    $\theta \pm 0.4$, $T \pm 40$, Shear$\pm0.1$ & 19          & 19           \\
+    $\theta \pm 0.2$, $T \pm 20$, No Shear      & 18          & 18           \\
+    $\theta \pm 0.2$, $T \pm 20$, Shear$\pm0.1$ & 19          & 19           \\\hline
+  \end{tabular}
+  \caption{Best performing models for each dataset}
+  \label{table:chosen_models}
+\end{table}
+
+%"aug_data/norm_rot0.4_trans40_shearNone/finetune_rigid/synthmorph_epoch19.h5"
+%"aug_data/norm_rot0.4_trans40_shear0.1/finetune_rigid/synthmorph_epoch19.h5"
+%"aug_data/norm_rot0.2_trans20_shearNone/finetune_rigid/synthmorph_epoch18.h5"
+%"aug_data/norm_rot0.2_trans20_shear0.1/finetune_rigid/synthmorph_epoch19.h5"
+
+%"aug_data/norm_rot0.4_trans40_shearNone/finetune_affine/synthmorph_epoch18.h5"
+%"aug_data/norm_rot0.4_trans40_shear0.1/finetune_affine/synthmorph_epoch19.h5"
+%"aug_data/norm_rot0.2_trans20_shearNone/finetune_affine/synthmorph_epoch18.h5"
+%"aug_data/norm_rot0.2_trans20_shear0.1/finetune_affine/synthmorph_epoch19.h5"

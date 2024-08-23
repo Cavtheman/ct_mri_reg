@@ -1,0 +1,21 @@
+In this paper, we have successfully demonstrated the capability of the Synthmorph network to register not only various MRI modalities to each other, but with extra training, also CT scans. However, we have been unable to reproduce their success in clinically relevant registration. Specifically, their paper reports a Dice score of over $0.6$ on white matter, grey matter and cerebrospinal fluid across various forms of multi-modal registration.\cite{synthmorph} In our experiments however, we were only ever able to achieve a mean Dice score of $0.3312$ with their model, even after fine-tuning on the SynthRAD data.
+
+This is likely due to the fact that they calculate this metric differently than in this paper. In their paper, they use an overlapping, one-hot encoded segmentation, meaning that any one voxel can be segmented as multiple classes. This makes any small mistakes that could otherwise potentially significantly decrease the score less punishing. The formula they use to calculate their ``soft'' Dice can be seen in Equation \ref{eq:synth_dice}\cite{synthmorph}, formulated as a loss function. In this paper, we use a non-overlapping segmentation of the volumes, and calculate the Dice score using the formula shown in Equation \ref{eq:dice}.
+
+\begin{align}
+\mathcal{L}(T_\theta, s_m, s_f) = -\frac{2}{|J|} \sum_{j \in J} \sum_{x \in \Omega} \frac{ \left( s_{m}|_j \circ T_\theta (x) \times s_{f}|_j(x) \right) }{ \left( s_{m}|_j \circ T_\theta (x) + s_{f}|_j(x) \right) }\label{eq:synth_dice}
+\end{align}
+
+However, the poor overall segmentation performance shown in Figure \ref{fig:dice_haus_example} would seem to indicate that the overall performance is still not all that good, with mean Hausdorff distances for nearly all classes being at or above $20$.
+
+%In this paper, we successfully created a method of automatically registering CT scans to T1 MRI scans, demonstrating that the multi-modal capabilities of the Synthmorph network can be extended beyond the various modalities of MRI scans to CT scans as well. This extra capability also did not seem to come at the expense of poorer performance in the original T1 modality,
+
+% though it has not been explored further to show whether this holds for different MRI modalities, or data
+
+%Best model White matter dice: 0.3312
+
+% TALK ABOUT PERFORMANCE
+
+
+\subsection{Limitations}
+This paper has demonstrated that Synthmorph can achieve roughly the same performance on CT-MRI registration as it does with just MRI-MRI registration. However, this is not a guarantee that the model can generalise to other, different types of scans such as PET scans, without further training. This has not been tested, but given the models baseline performance on CT-MRI registration, it is safe to assume.

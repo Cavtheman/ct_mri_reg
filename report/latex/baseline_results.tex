@@ -1,0 +1,71 @@
+% Baseline synthmorph
+As is to be expected, Synthmorph without any tuning performs very poorly when trying to register CT to MRI scans. This can be seen in Tables \ref{table:aff_ct_mr_baseline} and \ref{table:rigid_ct_mr_baseline} where both the $\|A\hat{B} - I\|$ and $\|B - \hat{B}\|$ loss values are roughly 2-5 times larger than the corresponding loss values of MRI-MRI registration in Tables \ref{table:aff_mr_mr_baseline} and \ref{table:rigid_mr_mr_baseline}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Updated affine SynthMorph results
+\begin{table}[h!]
+\centering
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cc}\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\\hline
+$\theta \pm 0.4$, $T \pm 40$, No Shear                 & 7.4554  & 7.4554  \\
+$\theta \pm 0.4$, $T \pm 40$, \text{Shear} $= \pm 0.1$ & 7.5588  & 7.5306  \\
+$\theta \pm 0.2$, $T \pm 20$, No Shear                 & 3.8292  & 3.8292  \\
+$\theta \pm 0.2$, $T \pm 20$, \text{Shear} $= \pm 0.1$ & 4.4211  & 4.4242  \\\hline
+\end{tabular}%
+}
+\caption{MRI-MRI registration results with different transformations using the untuned affine SynthMorph model.}
+\label{table:aff_mr_mr_baseline}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cc}\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\\hline
+$\theta \pm 0.4$, $T \pm 40$, No Shear                 & 44.1560 & 44.1560 \\
+$\theta \pm 0.4$, $T \pm 40$, \text{Shear} $= \pm 0.1$ & 44.5351 & 44.1592 \\
+$\theta \pm 0.2$, $T \pm 20$, No Shear                 & 42.0576 & 42.0576 \\
+$\theta \pm 0.2$, $T \pm 20$, \text{Shear} $= \pm 0.1$ & 43.3569 & 42.9668 \\\hline
+\end{tabular}%
+}
+\caption{CT-MRI registration results with different transformations using the untuned affine SynthMorph model.}
+\label{table:aff_ct_mr_baseline}
+\end{minipage}
+\end{table}
+
+% Updated rigid SynthMorph results
+\begin{table}[h!]
+\centering
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cc}\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\\hline
+$\theta \pm 0.4$, $T \pm 40$, No Shear                 & 8.8768  & 8.8768  \\
+$\theta \pm 0.4$, $T \pm 40$, \text{Shear} $= \pm 0.1$ & 19.1687 & 19.1985 \\
+$\theta \pm 0.2$, $T \pm 20$, No Shear                 & 4.5827  & 4.5827  \\
+$\theta \pm 0.2$, $T \pm 20$, \text{Shear} $= \pm 0.1$ & 16.8906 & 16.8533 \\\hline
+\end{tabular}%
+}
+\caption{MRI-MRI registration results with different transformations using the untuned rigid SynthMorph model.}
+\label{table:rigid_mr_mr_baseline}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cc}\hline
+Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\\hline
+$\theta \pm 0.4$, $T \pm 40$, No Shear                 & 24.9288 & 24.9288 \\
+$\theta \pm 0.4$, $T \pm 40$, \text{Shear} $= \pm 0.1$ & 31.9698 & 32.7524 \\
+$\theta \pm 0.2$, $T \pm 20$, No Shear                 & 23.8434 & 23.8434 \\
+$\theta \pm 0.2$, $T \pm 20$, \text{Shear} $= \pm 0.1$ & 29.9778 & 30.7856 \\\hline
+\end{tabular}%
+}
+\caption{CT-MRI registration results with different transformations using the untuned rigid SynthMorph model.}
+\label{table:rigid_ct_mr_baseline}
+\end{minipage}
+\end{table}

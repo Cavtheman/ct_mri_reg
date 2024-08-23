@@ -9,18 +9,18 @@ from skimage.transform import resize, rescale
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 class IndexTracker:
-    def __init__(self, ax, X, side_view=False, rgb=False, labels=None):
+    def __init__(self, ax, X, side_view=False, rgb=False, labels=None, cmap="gray"):
         if side_view:
             X = np.flip (np.transpose(X, [2,1,0,3]), axis=0)
 
         vmin, vmax = np.min (X), np.max (X)
 
-        self.index = 0
+        self.index = X.shape[2]//2
         self.X = X
         self.ax = ax
         self.rgb = rgb
         self.labels = labels
-        self.im = ax.imshow(self.X[:, :, self.index], cmap="gray", vmin=vmin, vmax=vmax)
+        self.im = ax.imshow(self.X[:, :, self.index], cmap=cmap, vmin=vmin, vmax=vmax)
 
 
         # Create a divider for the existing axes instance
@@ -47,7 +47,8 @@ class IndexTracker:
 
     def update(self):
         self.im.set_data(self.X[:, :, self.index])
-        self.ax.set_title(f'Use scroll wheel to navigate\nindex {self.index}')
+        #self.ax.set_title(f'Use scroll wheel to navigate\nindex {self.index}')
+        self.ax.set_title(f'Slice: {self.index}')
         self.im.axes.figure.canvas.draw()
 
 def parse_transform (path):
@@ -58,10 +59,12 @@ def parse_transform (path):
     return origo, transform
 
 # Interactive plot showing slices of 3D volume
-def plot_volume (volume, side_view=False, rgb=False, labels=None):
+def plot_volume (volume, side_view=False, rgb=False, labels=None, cmap="gray", title=None):
     fig, ax = plt.subplots(figsize=(8,8))
-    tracker = IndexTracker(ax, volume, side_view=side_view, rgb=rgb, labels=labels)
+    tracker = IndexTracker(ax, volume, side_view=side_view, rgb=rgb, labels=labels, cmap=cmap)
     fig.canvas.mpl_connect('scroll_event', tracker.on_scroll)
+    if title is not None:
+        plt.savefig (title)
     plt.show()
 
 # Normalisation between 0 and 1

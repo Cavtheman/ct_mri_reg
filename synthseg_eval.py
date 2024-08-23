@@ -5,7 +5,7 @@ sys.path.insert(0, 'SynthSeg/')
 from SynthSeg.predict import predict
 
 # Much of the code in the function is taken and modified from https://github.com/BBillot/SynthSeg/blob/master/bibtex.bib
-# Citation is in paper
+# Proper citation is in paper
 def simple_predict (input_data, output_data, gt_folder=None):
     path_images = input_data
     path_segm = output_data
@@ -111,25 +111,34 @@ def simple_predict (input_data, output_data, gt_folder=None):
             gt_folder=gt_folder,
             compute_distances=compute_distances)
 
-def predict_and_eval(fixed_folder, moved_folder, segm_output, single=False):
-    # Making "ground truth" predictions from the fixed images
+def predict_and_eval(fixed_folder, moved_folder, segm_output, ct=False, single=False):
     if single:
-        simple_predict (fixed_folder + "0.nii.gz", segm_output + "fixed/")
-        simple_predict (moved_folder + "0.nii.gz", segm_output + "moved/", gt_folder=(segm_output + "fixed/0_synthseg.nii.gz"))
+        fixed = fixed_folder + "0.nii.gz"
+        moved = moved_folder + "0.nii.gz"
+        gt_folder = segm_output + "fixed/0_synthseg.nii.gz"
     else:
-        simple_predict (fixed_folder, segm_output + "fixed/")
-        simple_predict (moved_folder, segm_output + "moved/", gt_folder=(segm_output + "fixed/"))
+        fixed = fixed_folder
+        moved = moved_folder
+        gt_folder = segm_output + "fixed/"
+
+    # Making "ground truth" predictions from the fixed images
+    simple_predict (fixed, gt_folder)
+    simple_predict (moved, segm_output + "moved/", gt_folder=gt_folder)
 
 
 
 if __name__ == "__main__":
     fixed_folder = sys.argv[1]
-    moved_folder = sys.argv[2]
-    segm_output = sys.argv[3]
+    results_folder = sys.argv[2]
+    moved_folder = results_folder + "moved_ct_to_mr/mr/"
+    segm_output = results_folder + "segmentations/"
+    #moved_folder = sys.argv[2]
+    #segm_output = sys.argv[3]
+
     #fixed_folder = "./aug_data/norm_rot0.2_trans20_shearNone/fixed/mr/"
     #moved_folder = "./aug_data/norm_rot0.2_trans20_shearNone/moved_mr_to_mr/"
     #moved_folder = "./aug_data/norm_rot0.2_trans20_shearNone/fixed/mr/"
 
     #segm_output = "./aug_segmentations/"
 
-    predict_and_eval (fixed_folder, moved_folder, segm_output, single=False)
+    predict_and_eval (fixed_folder, moved_folder, segm_output, ct=False, single=False)

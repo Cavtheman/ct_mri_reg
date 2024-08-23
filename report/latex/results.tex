@@ -1,129 +1,89 @@
-\begin{table}[h!]
-\centering
-\begin{minipage}{0.48\textwidth}
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{|c|c|c|}
-\hline
-Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\
-\hline
-No Rotation, No Translation, No Shear & $0$ & $0$ \\
-\hline
-$\theta = \pm 0.4$, $t = \pm 40$, No Shear & 9.2585 & 9.2585 \\
-\hline
-$\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 9.8315 & 12.3868 \\
-\hline
-Normalised, $\theta = \pm 0.4$, $t = \pm 40$, No Shear & 7.4767 & 7.4767 \\
-\hline
-Normalised, $\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 7.4014 & 10.3401 \\
-\hline
-$\theta = \pm 0.2$, $t = \pm 20$, No Shear & 5.8611 & 5.8611 \\
-\hline
-$\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 6.1733 & 7.3278 \\
-\hline
-Normalised, $\theta = \pm 0.2$, $t = \pm 20$, No Shear & 4.1896 & 4.1896 \\
-\hline
-Normalised, $\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 4.3918 & 5.6838 \\
-\hline
-\end{tabular}%
-}
-\caption{MR-MR registration results with different transformations using the baseline affine SynthMorph model.}
-\label{table:mr_mr_results_affine}
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\textwidth}
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{|c|c|c|}
-\hline
-Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\
-\hline
-No Rotation, No Translation, No Shear & 81.4608 & 81.4608 \\
-\hline
-$\theta = \pm 0.4$, $t = \pm 40$, No Shear & 66.2298 & 66.2298 \\
-\hline
-$\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 90.0000 & 90.9563 \\
-\hline
-Normalised, $\theta = \pm 0.4$, $t = \pm 40$, No Shear & 44.1781 & 44.1781 \\
-\hline
-Normalised, $\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 45.2697 & 45.9374 \\
-\hline
-$\theta = \pm 0.2$, $t = \pm 20$, No Shear & 87.5443 & 87.5443 \\
-\hline
-$\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 269.8159 & 276.1376 \\
-\hline
-Normalised, $\theta = \pm 0.2$, $t = \pm 20$, No Shear & 42.0669 & 42.0669 \\
-\hline
-Normalised, $\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 43.9500 & 43.9333 \\
-\hline
-\end{tabular}%
-}
-\caption{CT-MR registration results with different transformations using the baseline affine SynthMorph model.}
-\label{table:ct_mr_results_affine}
-\end{minipage}
-\end{table}
+To demonstrate the improvements made here over the capabilities of original Synthmorph model, we have first evaluated its performance on all four test datasets without any fine-tuning. However, for purposes of making the results more medically plausible, most of the models have not been evaluated on the test sets containing images that have been sheared, and metrics have not been calculated for them on the test sets. It will be clearly denoted where the shear test sets have been used.
+
+\input{latex/baseline_results} % text inside
+\input{latex/tuned_results} % text inside
+
+
+The results shown above are for each dataset, with the model trained on that dataset. While this can give a good overview of the performance of the model, it is not possible to make any statements about their relative performance without evaluating on the same things. In order to evaluate their overall performance we have chosen to evaluate them on just the two test datasets without shearing, with the aim of evaluating the performance on data that is as plausibly realistic as possible. Given that the $\|A\hat{B} - I\|$ and $\|B - \hat{B}\|$ metrics are so similar, we will include only the former. The results of these evaluations can be seen in Tables \ref{table:tuned_no_shear_AB_results} and \ref{table:tuned_no_shear_MI_results}. We also include the NMI metric here. In both these tables the ``Model Version'' describes whether the model in question is rigid or affine, and which training data was used to train it.
 
 \begin{table}[h!]
 \centering
-\begin{minipage}{0.48\textwidth}
-\centering
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{|c|c|c|}
+\begin{tabular}{c|cccc|c}
 \hline
-Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\
-\hline
-No Rotation, No Translation, No Shear & $0$ & $0$ \\
-\hline
-$\theta = \pm 0.4$, $t = \pm 40$, No Shear & 7.5015 & 7.5015 \\
-\hline
-$\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 17.7726 & 18.3158 \\
-\hline
-Normalised, $\theta = \pm 0.4$, $t = \pm 40$, No Shear & 8.8842 & 8.8842 \\
-\hline
-Normalised, $\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 19.0528 & 19.1625 \\
-\hline
-$\theta = \pm 0.2$, $t = \pm 20$, No Shear & 4.5461 & 4.5461 \\
-\hline
-$\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 17.1753 & 17.1819 \\
-\hline
-Normalised, $\theta = \pm 0.2$, $t = \pm 20$, No Shear & 4.6545 & 4.6545 \\
-\hline
-Normalised, $\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 17.3669 & 17.2396 \\
-\hline
-\end{tabular}%
+$\|A\hat{B} - I\|$ & \multicolumn{4}{|c|}{Model Version} & Baseline \\ \hline
+\multirow{3}{*}{Test Set parameters} & \multicolumn{4}{|c|}{Rigid} & Rigid \\ \cline{2-6}
+      & \multicolumn{2}{c}{No Shear} & \multicolumn{2}{c|}{Shear$\pm0.1$} \\\cline{2-5}
+      & $\theta\pm0.2$, $T\pm 20$ & $\theta\pm0.4$, $T\pm 40$ & $\theta\pm0.2$, $T\pm 20$ & $\theta\pm0.4$, $T\pm 40$ \\\cline{2-5}
+      $\theta \pm 0.2$, $T \pm 20$, No Shear & 2.7420 & \textbf{2.6641} & 3.5810 & 3.9383 & 4.5827 \\
+      $\theta \pm 0.4$, $T \pm 40$, No Shear & 6.8055 & 3.5053 & 8.3744 & 4.8060 & 8.8768\\ \cline{2-6}
+      & \multicolumn{4}{|c|}{Affine} & Affine\\ \cline{2-6}
+      $\theta \pm 0.2$, $T \pm 20$, No Shear & 2.7112 & 2.8222 & 2.9794 & 2.7970 & 3.8292\\
+      $\theta \pm 0.4$, $T \pm 40$, No Shear & 5.6467 & \textbf{3.3947} & 6.7972 & 3.6661 & 7.4554\\\hline
+\end{tabular}
 }
-\caption{MR-MR registration results with different transformations using the baseline rigid SynthMorph model.}
-\label{table:mr_mr_results_rigid}
-\end{minipage}
-\hfill
-\begin{minipage}{0.48\textwidth}
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{|c|c|c|}
-\hline
-Generation Parameters & $\|A\hat{B} - I\|$ & $\|B - \hat{B}\|$ \\
-\hline
-No Rotation, No Translation, No Shear & 60.5308 & 60.5308 \\
-\hline
-$\theta = \pm 0.4$, $t = \pm 40$, No Shear & 54.8180 & 54.8180 \\
-\hline
-$\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 61.0844 & 62.0519 \\
-\hline
-Normalised, $\theta = \pm 0.4$, $t = \pm 40$, No Shear & 24.9550 & 24.9550 \\
-\hline
-Normalised, $\theta = \pm 0.4$, $t = \pm 40$, \text{Shear} $= \pm 0.1$ & 32.4703 & 33.4180 \\
-\hline
-$\theta = \pm 0.2$, $t = \pm 20$, No Shear & 50.7994 & 50.7994 \\
-\hline
-$\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 56.2187 & 57.1268 \\
-\hline
-Normalised, $\theta = \pm 0.2$, $t = \pm 20$, No Shear & 23.7351 & 23.7351 \\
-\hline
-Normalised, $\theta = \pm 0.2$, $t = \pm 20$, \text{Shear} $= \pm 0.1$ & 31.8721 & 32.9091 \\
-\hline
-\end{tabular}%
-}
-\caption{CT-MR registration results with different transformations using the baseline rigid SynthMorph model.}
-\label{table:ct_mr_results_rigid}
-\end{minipage}
+\caption{CT-MRI registration results showing the $\|A\hat{B} - I\|$ loss of models trained on the different datasets. Rightmost column is MRI-MRI registration with baseline model for comparison. Bolded numbers denote the model with best performance for the relevant test set. Note that each test set here is spread out over two rows.}
+\label{table:tuned_no_shear_AB_results}
 \end{table}
+%2413
+%\end{table}
+
+The NMI score shown here is, as mentioned earlier calculated using the MRI transformed alongside the moved CT scan that was used for the registration.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[h!]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cccc|c}
+\hline
+Normalised Mutual Information & \multicolumn{4}{|c|}{Model Version} & Baseline \\ \hline
+\multirow{3}{*}{Test Set parameters} & \multicolumn{4}{|c|}{Rigid} & Rigid \\ \cline{2-6}
+      & \multicolumn{2}{c}{No Shear} & \multicolumn{2}{c|}{Shear$\pm0.1$} \\\cline{2-5}
+      & $\theta\pm0.2$, $T\pm 20$ & $\theta\pm0.4$, $T\pm 40$ & $\theta\pm0.2$, $T\pm 20$ & $\theta\pm0.4$, $T\pm 40$ \\\cline{2-5}
+      $\theta \pm 0.2$, $T \pm 20$, No Shear & 0.2462 & 0.2464 & 0.2434 & 0.2426 & 0.2182 \\
+      $\theta \pm 0.4$, $T \pm 40$, No Shear & 0.2430 & \textbf{0.2451} & 0.2349 & 0.2369 & 0.2137 \\\cline{2-6}
+      & \multicolumn{4}{|c|}{Affine} & Affine\\ \cline{2-6}
+      $\theta \pm 0.2$, $T \pm 20$, No Shear & 0.2475 & 0.2477 & 0.2476 & \textbf{0.2478} & 0.2055\\
+      $\theta \pm 0.4$, $T \pm 40$, No Shear & 0.2441 & 0.2442 & 0.2444 & 0.2444 & 0.2017\\\hline
+\end{tabular}%
+}
+\caption{CT-MRI registration results showing the MI score, for models trained on the different datasets. Rightmost column is MRI-MRI registration with baseline model for comparison. Bolded numbers denote the model with best performance for the relevant test set. Note that each test set here is spread out over two rows.}
+\label{table:tuned_no_shear_MI_results}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Examples showing the registration process can be seen in Figure \ref{fig:reg_example}. This is included to show that despite the NMI scores being in the range of roughly $0.20-0.22$, the resulting registration is visually very close, albeit with small differences. These differences can be visualised better in Figure \ref{fig:reg_diff}, which shows the absolute voxel errors of a single slice.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.90\textwidth]{images/registration_example_ct_mr.png}
+\\
+\includegraphics[width=0.90\textwidth]{images/registration_example_mr_mr.png}
+\caption{Examples showing a 2D slice of a registered image. From left to right: moving, fixed, moved MRI, moved CT. The moving images have been subject to the exact same transform, for ease of comparison. The moved images in the top row have been moved according to the affine transform found by registering the moving CT to the fixed MRI. The bottom row is transformed according to the moving MRI.}\label{fig:reg_example}
+\end{figure}
+
+%Best model by dice: (4, (0.20270081025856937, 20.503577818261668))
+% (0.4, 40, None, 'rigid') model
+Our use of the SynthSeg for segmentation outputs a volume with 32 different classes. This is used as a tool to evaluate the clinical viability of the registration. An example showing a slice of segmented brains can be seen in Figure \ref{fig:seg_diff}.
+
+\begin{figure}[h!]
+  \centering
+  \begin{minipage}{0.45\textwidth}
+    \centering
+    \includegraphics[width=0.48\textwidth]{images/registration_example_ct_mr_diff.png}
+    \includegraphics[width=0.48\textwidth]{images/registration_example_mr_mr_diff.png}
+    \caption{Example showing showing the same 2D slice as in Figure \ref{fig:reg_example}. Left image is CT-MRI registered, right is MRI-MRI registered. This shows the absolute differences between the fixed and moved MRI images.}\label{fig:reg_diff}
+  \end{minipage}\hfill
+  \begin{minipage}{0.45\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/segm_fixed_moved.png}
+    \caption{Example showing a 2D slice of the segmentation. Left is ``ground truth'' segmentation of the fixed volume. Right is segmentation of moved image.}\label{fig:seg_diff}
+  \end{minipage}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.48\textwidth]{images/dice/data0.2_20_None_model0.4_40_0.1_rigid.png}
+    \includegraphics[width=0.48\textwidth]{images/dice/data0.4_40_None_model0.4_40_None_rigid.png}
+    \caption{Dice scores and Hausdorff distances of the SynthSeg segmentations of moved images using one of the best performing registration models.}\label{fig:dice_haus_example}
+\end{figure}
